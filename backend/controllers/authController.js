@@ -129,3 +129,81 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'User not found with this email' });
+
+        // Generate 6-digit OTP for reset
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.resetToken = otp;
+        user.resetTokenExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+        await user.save();
+
+        // Send Email
+        const message = `Your password reset code is: ${otp}. This code expires in 10 minutes.`;
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'Password Reset Code',
+                message
+            });
+            res.json({ message: 'Reset code sent to email' });
+        } catch (err) {
+            user.resetToken = undefined;
+            user.resetTokenExpires = undefined;
+            await user.save();
+            return res.status(500).json({ message: 'Email could not be sent' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.verifyResetCode = async (req, res) => {
+    const { email, otp } = req.body;
+    try {
+        const user = await User.findOne({
+            email,
+            resetToken: otp,
+            resetTokenExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset code' });
+        }
+
+        res.json({ message: 'Code verified successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+    try {
+        const user = await User.findOne({
+            email,
+            resetToken: otp,
+            resetTokenExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset code' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        user.resetToken = undefined;
+        user.resetTokenExpires = undefined;
+
+        await user.save();
+
+        res.json({ message: 'Password reset successful' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
