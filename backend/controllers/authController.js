@@ -18,8 +18,10 @@ exports.register = async (req, res) => {
 
         // Admin registration protection
         let finalRole = role || 'user';
+        let isVerified = false;
         if (adminCode === '22230902') {
             finalRole = 'admin';
+            isVerified = true;
         } else if (role === 'admin') {
             return res.status(403).json({ message: 'Invalid Admin Secret Code' });
         }
@@ -33,7 +35,7 @@ exports.register = async (req, res) => {
             email,
             password: hashedPassword,
             role: finalRole,
-            isVerified: true
+            isVerified: isVerified
         });
 
         // Notify Admins of new enrollment
@@ -43,14 +45,18 @@ exports.register = async (req, res) => {
                 to: admin._id,
                 from: user._id,
                 title: 'New Operative Recruited',
-                message: `Identity ${name} (${role || 'user'}) has enrolled in the CoreIMS protocol. Clearances pending.`
+                message: `Identity ${name} (${finalRole}) has enrolled in the CoreIMS protocol. Approval required.`
             }));
             await Notification.insertMany(notifications);
         } catch (notifierErr) {
             console.error('Enrollment Signal Failed:', notifierErr);
         }
 
-        res.status(201).json({ message: 'User registered successfully. Please login.' });
+        const successMsg = isVerified
+            ? 'Admin registered successfully. Please login.'
+            : 'Registration submitted. Awaiting Admin Approval.';
+
+        res.status(201).json({ message: successMsg, pendingApproval: !isVerified });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -85,6 +91,11 @@ exports.login = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+        // Check if user is verified/approved
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Access Denied: Account pending admin approval.' });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });

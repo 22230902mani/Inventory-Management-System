@@ -16,7 +16,12 @@ const Register = () => {
         setMsg('');
         const result = await register(formData);
         if (result.success) {
-            navigate('/login');
+            if (result.message.includes('Awaiting Admin Approval')) {
+                setMsg(result.message);
+                setLoading(false);
+            } else {
+                navigate('/login');
+            }
         } else {
             setMsg(result.message);
             setLoading(false);
@@ -63,7 +68,12 @@ const Register = () => {
                             <p className="text-white/40 text-sm mb-8">Join the operational force.</p>
 
                             {msg && (
-                                <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs text-center font-bold">
+                                <div className={twMerge(
+                                    "mb-6 p-3 border rounded-lg text-xs text-center font-bold",
+                                    msg.includes('Awaiting') || msg.includes('successfully')
+                                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                        : "bg-red-500/10 border-red-500/20 text-red-500"
+                                )}>
                                     {msg}
                                 </div>
                             )}
