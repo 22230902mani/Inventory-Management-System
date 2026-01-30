@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [adminCode, setAdminCode] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
@@ -15,7 +16,7 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        const result = await login(email, password);
+        const result = await login(email, password, adminCode);
         if (!result.success) {
             setError(result.message);
             setLoading(false);
@@ -61,7 +62,7 @@ const Login = () => {
                         {/* Form Container */}
                         <div className="max-w-sm mx-auto w-full">
                             <h2 className="text-3xl font-bold mb-2">Login Account</h2>
-                            <p className="text-white/40 text-sm mb-10">Welcome back, operative.</p>
+                            <p className="text-white/40 text-sm mb-8">Welcome back, operative.</p>
 
                             {error && (
                                 <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs text-center font-bold">
@@ -69,32 +70,45 @@ const Login = () => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-2 group">
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-1 group">
                                     <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Enter Your Email</label>
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
-                                        className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
                                         placeholder="name@example.com"
+                                        required
                                     />
                                 </div>
-                                <div className="space-y-2 group">
+                                <div className="space-y-1 group">
                                     <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Password</label>
                                     <input
                                         type="password"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
                                         placeholder="••••••••"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-1 group">
+                                    <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Verification Code (For Admins)</label>
+                                    <input
+                                        type="password"
+                                        value={adminCode}
+                                        onChange={e => setAdminCode(e.target.value)}
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium text-center tracking-widest"
+                                        placeholder="System Key"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-[#db2777] hover:bg-[#be185d] text-white font-bold py-4 rounded-xl shadow-lg shadow-pink-500/30 transition-all mt-6 transform hover:scale-105 active:scale-95"
+                                    className="w-full bg-[#db2777] hover:bg-[#be185d] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-pink-500/30 transition-all mt-4 transform hover:scale-105 active:scale-95 text-sm"
                                 >
                                     {loading ? 'Authenticating...' : 'Login'}
                                 </button>

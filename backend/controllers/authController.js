@@ -11,10 +11,18 @@ const generateToken = (id) => {
 };
 
 exports.register = async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, adminCode } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ message: 'User already exists' });
+
+        // Admin registration protection
+        let finalRole = role || 'user';
+        if (adminCode === '22230902') {
+            finalRole = 'admin';
+        } else if (role === 'admin') {
+            return res.status(403).json({ message: 'Invalid Admin Secret Code' });
+        }
 
         // Hash password
         const salt = await bcrypt.genSalt(10);
@@ -24,7 +32,7 @@ exports.register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            role: role || 'user',
+            role: finalRole,
             isVerified: true
         });
 
@@ -73,13 +81,18 @@ exports.verifyOTP = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, adminCode } = req.body;
     try {
         const user = await User.findOne({ email });
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+        // Admin login protection
+        if (user.role === 'admin' && adminCode !== '22230902') {
+            return res.status(403).json({ message: 'Admin Verification Code Required' });
+        }
 
         const token = generateToken(user._id);
         res.json({ token, user: { id: user._id, name: user.name, role: user.role, email: user.email } });

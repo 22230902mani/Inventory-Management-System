@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const Register = () => {
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user' });
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user', adminCode: '' });
     const { register } = useAuth();
     const navigate = useNavigate();
     const [msg, setMsg] = useState('');
@@ -68,67 +68,79 @@ const Register = () => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-2 group">
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-1 group">
                                     <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Full Name</label>
                                     <input
                                         type="text"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
                                         placeholder="John Doe"
                                         required
                                     />
                                 </div>
-                                <div className="space-y-2 group">
+                                <div className="space-y-1 group">
                                     <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Strategic Email</label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
                                         placeholder="name@example.com"
                                         required
                                     />
                                 </div>
-                                <div className="space-y-2 group">
+                                <div className="space-y-1 group">
                                     <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Password</label>
                                     <input
                                         type="password"
                                         value={formData.password}
                                         onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                        className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
+                                        className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium"
                                         placeholder="••••••••"
                                         required
                                     />
                                 </div>
 
-                                <div className="space-y-2 group">
-                                    <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Designation</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full bg-white text-black border border-white/10 py-3 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium appearance-none cursor-pointer"
-                                            onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                            value={formData.role}
-                                        >
-                                            <option value="user">Field Operative (User)</option>
-                                            <option value="manager">Logistics Officer (Manager)</option>
-                                            <option value="admin">Command Center (Admin)</option>
-                                            <option value="sales">Innovation Wing (Sales)</option>
-                                        </select>
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/50">▼</div>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-1 group">
+                                        <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Designation</label>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium appearance-none cursor-pointer"
+                                                onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                                value={formData.role}
+                                            >
+                                                <option value="user">Field Operative (User)</option>
+                                                <option value="manager">Logistics Officer (Manager)</option>
+                                                <option value="sales">Innovation Wing (Sales)</option>
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/50">▼</div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1 group">
+                                        <label className="text-xs font-medium text-white/50 group-focus-within:text-pink-500 transition-colors ml-1">Verification Code (Optional)</label>
+                                        <input
+                                            type="password"
+                                            value={formData.adminCode}
+                                            onChange={e => setFormData({ ...formData, adminCode: e.target.value })}
+                                            className="w-full bg-white text-black border border-white/10 py-2.5 px-4 rounded-xl placeholder-black/30 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all font-medium text-center tracking-widest"
+                                            placeholder="System Key"
+                                        />
                                     </div>
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-[#db2777] hover:bg-[#be185d] text-white font-bold py-4 rounded-xl shadow-lg shadow-pink-500/30 transition-all mt-6 transform hover:scale-105 active:scale-95"
+                                    className="w-full bg-[#db2777] hover:bg-[#be185d] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-pink-500/30 transition-all mt-4 transform hover:scale-105 active:scale-95 text-sm"
                                 >
                                     {loading ? 'Processing...' : 'Sign Up'}
                                 </button>
 
-                                <div className="text-center pt-2">
+                                <div className="text-center pt-1">
                                     <Link to="/login" className="text-xs text-white/40 hover:text-white transition-colors">Already have an account? Login</Link>
                                 </div>
                             </form>
