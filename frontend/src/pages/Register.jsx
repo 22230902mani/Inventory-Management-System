@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { twMerge } from 'tailwind-merge';
 
 const Register = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user', adminCode: '' });
