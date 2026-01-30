@@ -1,9 +1,8 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-    // Create transporter
     const transporter = nodemailer.createTransport({
-        service: 'gmail', // or configured host
+        service: 'gmail',
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
@@ -19,11 +18,14 @@ const sendEmail = async (options) => {
 
     try {
         await transporter.sendMail(message);
-        console.log('Email sent to: ' + options.email);
+        console.log(`✅ Reset Signal transmitted to: ${options.email}`);
     } catch (error) {
-        console.error('Email send failed:', error);
-        // In dev, we might just log it so the flow continues
-        console.log('DEV MODE - MESSAGE:', options.message);
+        console.error('❌ Email Alert Failed:', error.message);
+        // During dev, keep printing to console so the user isn't stuck
+        console.log('--- DEV FALLBACK MESSAGE ---');
+        console.log(options.message);
+        console.log('---------------------------');
+        throw error; // Re-throw so the controller knows it failed
     }
 };
 
