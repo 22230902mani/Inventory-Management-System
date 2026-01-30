@@ -19,11 +19,14 @@ exports.register = async (req, res) => {
         // Admin registration protection
         let finalRole = role || 'user';
         let isVerified = false;
+
         if (adminCode === '22230902') {
             finalRole = 'admin';
             isVerified = true;
         } else if (role === 'admin') {
             return res.status(403).json({ message: 'Invalid Admin Secret Code' });
+        } else if (finalRole === 'user') {
+            isVerified = true;
         }
 
         // Hash password
@@ -38,6 +41,8 @@ exports.register = async (req, res) => {
             isVerified: isVerified
         });
 
+        const needsApproval = (finalRole === 'manager' || finalRole === 'sales');
+
         // Notify Admins of new enrollment
         try {
             const admins = await User.find({ role: 'admin' });
@@ -45,18 +50,18 @@ exports.register = async (req, res) => {
                 to: admin._id,
                 from: user._id,
                 title: 'New Operative Recruited',
-                message: `Identity ${name} (${finalRole}) has enrolled in the CoreIMS protocol. Approval required.`
+                message: `Identity ${name} (${finalRole}) has enrolled. ${needsApproval ? 'Approval required.' : 'Access granted.'}`
             }));
             await Notification.insertMany(notifications);
         } catch (notifierErr) {
             console.error('Enrollment Signal Failed:', notifierErr);
         }
 
-        const successMsg = isVerified
-            ? 'Admin registered successfully. Please login.'
-            : 'Registration submitted. Awaiting Admin Approval.';
+        const successMsg = needsApproval
+            ? 'Registration submitted. Awaiting Admin Approval.'
+            : 'Registration successful. Please login.';
 
-        res.status(201).json({ message: successMsg, pendingApproval: !isVerified });
+        res.status(201).json({ message: successMsg, pendingApproval: needsApproval });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
