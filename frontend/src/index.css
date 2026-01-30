@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-blue: #3b82f6;
+  --brand-pink: #ec4899;
+  --brand-green: #10b981;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --input-bg: rgba(0, 0, 0, 0.05);
+  --btn-secondary-bg: rgba(0, 0, 0, 0.05);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+}
+
+.dark {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.4);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply font-sans antialiased overflow-x-hidden min-h-screen selection:bg-brand-pink/30;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-sans font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .neural-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  }
+
+  .neural-glass {
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+    @apply backdrop-blur-xl border rounded-2xl shadow-2xl transition-all duration-300;
+  }
+
+  .neural-glass:hover {
+    @apply bg-opacity-80 border-opacity-30;
+  }
+
+  .card-gradient-blue {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.2));
+  }
+
+  .card-gradient-blue::before {
+    content: '';
+    @apply absolute inset-0 bg-blue-500/10 blur-3xl -z-10;
+  }
+
+  .card-gradient-pink {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(219, 39, 119, 0.2));
+  }
+
+  .card-gradient-pink::before {
+    content: '';
+    @apply absolute inset-0 bg-pink-500/10 blur-3xl -z-10;
+  }
+
+  .card-gradient-green {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.2));
+  }
+
+  .card-gradient-green::before {
+    content: '';
+    @apply absolute inset-0 bg-green-500/10 blur-3xl -z-10;
+  }
+
+  .neural-badge {
+    @apply px-3 py-1 rounded-full text-[10px] font-extrabold tracking-[0.2em] uppercase border flex items-center gap-1.5;
+  }
+
+  .neural-badge-success {
+    @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/30;
+  }
+
+  .neural-badge-pending {
+    @apply bg-amber-500/10 text-amber-400 border-amber-500/30;
+  }
+
+  .neural-badge-danger {
+    @apply bg-rose-500/10 text-rose-400 border-rose-500/30;
+  }
+
+  .btn-neural {
+    @apply px-6 py-2.5 rounded-xl font-bold tracking-widest text-xs uppercase transition-all duration-200 active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .btn-neural-primary {
+    @apply bg-brand-blue text-white hover:bg-brand-blue/90 shadow-neural;
+  }
+
+  .btn-neural-secondary {
+    background-color: var(--btn-secondary-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    @apply hover:bg-opacity-80;
+  }
+
+  .input-neural {
+    background-color: var(--input-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    @apply w-full rounded-xl px-4 py-3 placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar,
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track,
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb,
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    @apply rounded-full hover:bg-opacity-80;
+  }
+}
+
+/* Animations */
+@keyframes magnetic-lift {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+.magnetic-hover:hover {
+  animation: magnetic-lift 0.3s forwards cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Table styling */
+.neural-table {
+  @apply w-full border-separate border-spacing-y-3;
+}
+
+.neural-table th {
+  color: var(--text-secondary);
+  @apply px-6 py-4 text-left text-[10px] font-extrabold uppercase tracking-[0.2em] border-b border-opacity-5;
+}
+
+.neural-table td {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--card-border);
+  @apply px-6 py-4 first:rounded-l-2xl last:rounded-r-2xl border-y transition-all duration-300;
+}
+
+.neural-table tr:hover td {
+  @apply bg-opacity-80;
+  border-color: var(--brand-blue);
+}
