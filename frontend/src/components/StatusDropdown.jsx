@@ -34,9 +34,19 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
             }
             if (left < 10) left = 10; // min left margin
 
+            // Vertical Check
+            const dropdownHeight = 240; // Approximate height of menu
+            let top = rect.bottom + 8;
+
+            // If dropping down goes off screen, go UP instead
+            if (top + dropdownHeight > window.innerHeight) {
+                top = rect.top - dropdownHeight - 8;
+            }
+
             setCoords({
-                top: rect.bottom + 8,
+                top: top,
                 left: left,
+                originY: top > rect.top ? 0 : 1 // Transformation origin (0=top, 1=bottom) for animation from correct side
             });
         }
     };
@@ -108,8 +118,9 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
                     {/* The Dropdown Menu */}
                     <motion.div
                         ref={dropdownRef}
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        initial={{ opacity: 0, scale: 0.95, scaleY: 0.8, transformOrigin: `50% ${coords.originY * 100}%` }}
+                        animate={{ opacity: 1, scale: 1, scaleY: 1 }}
+                        transition={{ type: "spring", duration: 0.3 }}
                         style={{
                             position: 'fixed',
                             top: coords.top,
