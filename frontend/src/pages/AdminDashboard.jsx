@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -9,7 +10,7 @@ import {
     Package,
     AlertTriangle,
     ShoppingCart,
-    DollarSign,
+    IndianRupee,
     Scan,
     Camera,
     Search,
@@ -25,19 +26,26 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Scanner from '../components/Scanner';
+import NeuralCamera from '../components/NeuralCamera';
 import NeuralCard from '../components/ui/NeuralCard';
 import NeuralBadge from '../components/ui/NeuralBadge';
 import NeuralButton from '../components/ui/NeuralButton';
 import NeuralInput from '../components/ui/NeuralInput';
 import NeuralNotifications from '../components/NeuralNotifications';
+import SystemMetricsChart from '../components/SystemMetricsChart';
+import { useToast } from '../context/ToastContext';
 
 const AdminDashboard = () => {
+    const navigate = useNavigate();
+    const { addToast } = useToast();
     const [stats, setStats] = useState({
         totalProducts: 0,
         totalUsers: 0,
         lowStockProducts: 0,
         totalOrders: 0,
         totalRevenue: 0,
+        totalPayouts: 0,
+        netBalance: 0,
         recentOrders: [],
         outOfStockCount: 0
     });
@@ -46,6 +54,8 @@ const AdminDashboard = () => {
     const [scanCode, setScanCode] = useState('');
     const [scannedProduct, setScannedProduct] = useState(null);
     const [showScanner, setShowScanner] = useState(false);
+
+
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -68,9 +78,14 @@ const AdminDashboard = () => {
                 setPendingProducts(data);
             } catch (error) { console.error(error); }
         };
+
+
         fetchStats();
         fetchPending();
+
     }, []);
+
+
 
     const handleApprove = async (id) => {
         try {
@@ -78,10 +93,10 @@ const AdminDashboard = () => {
             await axios.put(`http://localhost:6700/api/inventory/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert("Asset Authorized & Deployed to Main Grid.");
+            addToast("Asset Authorized & Deployed to Main Grid.", "success");
             setPendingProducts(pendingProducts.filter(p => p._id !== id));
         } catch (error) {
-            alert("Authorization Failed");
+            addToast("Authorization Failed", "error");
         }
     };
 
@@ -91,10 +106,10 @@ const AdminDashboard = () => {
             await axios.put(`http://localhost:6700/api/inventory/${id}/reject`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert("Protocol Violation: Asset Rejected.");
+            addToast("Protocol Violation: Asset Rejected.", "warning");
             setPendingProducts(pendingProducts.filter(p => p._id !== id));
         } catch (error) {
-            alert("Rejection Failed");
+            addToast("Rejection Failed", "error");
         }
     };
 
@@ -108,8 +123,9 @@ const AdminDashboard = () => {
             });
             setScannedProduct(data);
             setScanCode('');
+            addToast(`Verrified: ${data.name}`, "info");
         } catch (error) {
-            alert('Product not found or error scanning');
+            addToast(error.response?.data?.message || 'Verification Error', "error");
         }
     };
 
@@ -153,103 +169,92 @@ const AdminDashboard = () => {
             )}
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <NeuralCard gradient="blue" delay={0.1}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Total Capital</p>
-                            <h3 className="text-2xl font-black text-[var(--text-primary)]">₹{stats.totalRevenue.toLocaleString('en-IN')}</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {[
+                    { label: 'Total Order Revenue', mobileLabel: 'REVENUE', value: `₹${stats.totalRevenue?.toLocaleString('en-IN')}`, icon: IndianRupee, color: 'dark:from-[#022c22] dark:to-[#064e3b] dark:border-emerald-500/20', lightColor: 'bg-emerald-100 border-emerald-200', iconColor: 'text-emerald-600 dark:text-emerald-400', trend: 12.5 },
+                    { label: 'Sales Payouts', mobileLabel: 'COMMISSION', value: `₹${stats.totalPayouts?.toLocaleString('en-IN')}`, icon: Send, color: 'dark:from-[#451a03] dark:to-[#78350f] dark:border-amber-500/20', lightColor: 'bg-amber-100 border-amber-200', iconColor: 'text-amber-600 dark:text-amber-400', trend: null },
+                    { label: 'Company Net Profit', mobileLabel: 'PROFIT', value: `₹${stats.netBalance?.toLocaleString('en-IN')}`, icon: ShieldCheck, color: 'dark:from-[#172554] dark:to-[#1e3a8a] dark:border-blue-500/20', lightColor: 'bg-blue-100 border-blue-200', iconColor: 'text-blue-600 dark:text-blue-400', trend: 12 },
+                    { label: 'Critical Alerts', mobileLabel: 'ALERTS', value: stats.outOfStockCount || 0, icon: AlertTriangle, color: 'dark:from-[#4c0519] dark:to-[#831843] dark:border-rose-500/20', lightColor: 'bg-rose-100 border-rose-200', iconColor: 'text-rose-600 dark:text-rose-400', trend: -5 }
+                ].map((stat, i) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.1 }}
+                        className={`relative p-4 sm:p-6 rounded-[28px] border overflow-hidden group hover:shadow-2xl transition-all duration-500 bg-gradient-to-br ${stat.color} ${stat.lightColor}`}
+                    >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 dark:bg-white/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-700 pointer-events-none" />
+                        <div className="relative flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/50 mb-1 truncate sm:hidden">{stat.mobileLabel}</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/50 mb-1 truncate hidden sm:block">{stat.label}</p>
+                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate">{stat.value}</h3>
+                                {stat.trend && (
+                                    <div className={`flex items-center gap-1 text-[10px] font-black mt-1 ${stat.trend > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                        {stat.trend > 0 ? <TrendingUp size={10} /> : <Activity size={10} />}
+                                        <span>{Math.abs(stat.trend)}%</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`flex-shrink-0 p-3 sm:p-4 bg-white shadow-sm dark:bg-black/20 rounded-2xl border dark:border-white/10 dark:backdrop-blur-xl dark:shadow-inner ${stat.iconColor}`}>
+                                <stat.icon size={24} />
+                            </div>
                         </div>
-                        <div className="p-3 bg-blue-500/20 rounded-xl">
-                            <DollarSign className="text-blue-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard gradient="pink" delay={0.2}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Active Orders</p>
-                            <h3 className="text-2xl font-black text-[var(--text-primary)]">{stats.totalOrders}</h3>
-                        </div>
-                        <div className="p-3 bg-pink-500/20 rounded-xl">
-                            <ShoppingCart className="text-pink-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard gradient="green" delay={0.3}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Total Inventory</p>
-                            <h3 className="text-2xl font-black text-[var(--text-primary)]">{stats.totalProducts}</h3>
-                        </div>
-                        <div className="p-3 bg-emerald-500/20 rounded-xl">
-                            <Package className="text-emerald-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard className="bg-rose-500/5 border-rose-500/20" delay={0.4}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Depleted Units</p>
-                            <h3 className="text-2xl font-black text-rose-400">{stats.outOfStockCount || 0}</h3>
-                        </div>
-                        <div className="p-3 bg-rose-500/20 rounded-xl">
-                            <AlertTriangle className="text-rose-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
+                    </motion.div>
+                ))}
             </div>
 
-            {/* Approvals Section */}
+
+            {/* Proposal Manifest Section */}
             {pendingProducts.length > 0 && (
                 <NeuralCard className="bg-brand-pink/5 border-brand-pink/20" delay={0.45}>
                     <div className="flex items-center gap-3 mb-6">
                         <CheckCircle className="text-brand-pink" size={24} />
-                        <h4 className="text-lg font-bold">Inbox: Innovation Approvals</h4>
-                        <NeuralBadge variant="pending">{pendingProducts.length} Awaiting Protocol</NeuralBadge>
+                        <h4 className="text-lg font-black uppercase italic italic tracking-tighter text-[var(--text-primary)]">Central Protocol Manifest</h4>
+                        <span className="h-6 px-3 bg-brand-pink/20 text-brand-pink text-[10px] font-black uppercase flex items-center rounded-full border border-brand-pink/30">
+                            {pendingProducts.filter(p => p.status === 'pending').length} Pending Protocols
+                        </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {pendingProducts.map(p => (
-                            <div key={p._id} className="p-4 rounded-xl bg-[var(--input-bg)] border border-[var(--card-border)] hover:border-brand-pink/50 transition-all flex flex-col justify-between gap-4">
+                            <div key={p._id} className="p-5 rounded-[30px] bg-[var(--card-bg)] border border-[var(--card-border)] hover:border-brand-pink/50 transition-all flex flex-col justify-between gap-4">
                                 {p.images && p.images.length > 0 && (
-                                    <div className="flex gap-2 overflow-x-auto mb-2 custom-scrollbar pb-2">
-                                        {p.images.map((img, idx) => (
-                                            <img key={idx} src={`http://localhost:6700${img}`} className="w-16 h-16 object-cover rounded-lg border border-white/10" alt="evidence" />
+                                    <div className="flex gap-2 mb-2">
+                                        {p.images.slice(0, 3).map((img, idx) => (
+                                            <img key={idx} src={`http://localhost:6700${img}`} className="w-14 h-14 object-cover rounded-xl border border-[var(--card-border)]" alt="evidence" />
                                         ))}
                                     </div>
                                 )}
                                 <div>
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h5 className="font-bold text-[var(--text-primary)]">{p.name}</h5>
-                                        <span className="text-[10px] font-mono text-[var(--text-secondary)]">{p.sku}</span>
+                                    <h5 className="font-black text-[var(--text-primary)] uppercase italic tracking-tight text-lg leading-tight mb-1">{p.name}</h5>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em]">#SKU-{p.sku?.toUpperCase()}</p>
+                                        <NeuralBadge variant={p.status === 'active' ? 'success' : p.status === 'rejected' ? 'danger' : 'pending'}>
+                                            {p.status.toUpperCase()}
+                                        </NeuralBadge>
                                     </div>
-                                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide mb-1">
-                                        Company: <span className="text-white">{p.companyName || 'N/A'}</span>
-                                    </p>
-                                    <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wide mb-1">
-                                        Prop: <span className="text-brand-blue">{p.addedBy?.name || 'Unknown Agent'}</span>
-                                    </p>
-                                    <p className="text-xs text-[var(--text-secondary)] line-clamp-2">{p.description}</p>
+                                    <div className="space-y-1.5 mb-4">
+                                        <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
+                                            <div className="w-1 h-1 bg-pink-500 rounded-full" /> Agent: <span className="text-[var(--text-primary)]">{p.addedBy?.name || 'Ghost'}</span>
+                                        </div>
+                                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">"{p.description}"</p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-[var(--card-border)]">
-                                    <p className="font-black text-[var(--text-primary)]">₹{p.price}</p>
-                                    <div className="flex gap-2">
-                                        <NeuralButton
-                                            onClick={() => handleReject(p._id)}
-                                            className="h-8 px-4 text-[10px] bg-rose-500 hover:bg-rose-400 text-black"
-                                        >
-                                            REJECT
-                                        </NeuralButton>
-                                        <NeuralButton
-                                            onClick={() => handleApprove(p._id)}
-                                            className="h-8 px-4 text-[10px] bg-emerald-500 hover:bg-emerald-400 text-black"
-                                        >
-                                            AUTHORIZE
-                                        </NeuralButton>
-                                    </div>
+                                <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
+                                    <p className="font-black text-xl italic tracking-tighter text-[var(--text-primary)]">₹{p.price}</p>
+                                    {p.status === 'pending' ? (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleReject(p._id)} className="h-10 px-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-black font-black text-[10px] uppercase transition-all rounded-xl">REJECT</button>
+                                            <button onClick={() => handleApprove(p._id)} className="h-10 px-6 bg-white text-black hover:bg-white/90 font-black text-[10px] uppercase transition-all rounded-xl">AUTHORIZE</button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-end">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">PROTOCOL</p>
+                                            <p className={`text-[10px] font-black uppercase tracking-widest ${p.status === 'active' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                {p.status === 'active' ? 'ACTIVE' : 'TERMINATED'}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -257,134 +262,151 @@ const AdminDashboard = () => {
                 </NeuralCard>
             )}
 
-            {/* Scanner HUD */}
-            <NeuralCard className="bg-brand-blue/5 border-brand-blue/20 overflow-visible" delay={0.5}>
-                <div className="flex flex-col lg:flex-row gap-8 items-center">
-                    <div className="flex-1 space-y-4 w-full">
-                        <div className="flex items-center gap-3">
-                            <Scan className="text-brand-blue" size={24} />
-                            <h4 className="text-lg font-bold tracking-tight">Neural Scanner Interface</h4>
-                        </div>
-                        <form onSubmit={handleScan} className="flex gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                                <input
-                                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30 transition-all placeholder:text-[var(--text-secondary)] text-[var(--text-primary)]"
-                                    placeholder="Awaiting SKU/Barcode signal..."
-                                    value={scanCode}
-                                    onChange={e => setScanCode(e.target.value)}
-                                />
-                            </div>
-                            <NeuralButton type="button" variant="secondary" onClick={() => setShowScanner(true)}>
-                                <Camera size={18} />
-                            </NeuralButton>
-                            <NeuralButton type="submit">Verify</NeuralButton>
-                        </form>
-                    </div>
 
-                    <AnimatePresence mode="wait">
-                        {scannedProduct ? (
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="flex-1 w-full bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center justify-between"
-                            >
-                                <div className="space-y-1">
-                                    <h5 className="font-bold text-brand-blue">{scannedProduct.name}</h5>
-                                    <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-widest">
-                                        ID: {scannedProduct._id.slice(-8)} • QTY: {scannedProduct.quantity}
-                                    </p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <NeuralButton variant="secondary" onClick={() => updateStock(-1)} className="w-10 h-10 p-0 rounded-full">
-                                        <Minus size={16} />
-                                    </NeuralButton>
-                                    <NeuralButton variant="secondary" onClick={() => updateStock(1)} className="w-10 h-10 p-0 rounded-full border-brand-green/30 text-emerald-400">
-                                        <Plus size={16} />
-                                    </NeuralButton>
-                                    <NeuralButton variant="danger" onClick={() => setScannedProduct(null)} className="w-10 h-10 p-0 rounded-full">
-                                        <X size={16} />
-                                    </NeuralButton>
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <div className="flex-1 w-full flex items-center justify-center border-2 border-dashed border-[var(--card-border)] rounded-2xl h-[72px]">
-                                <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.3em]">Scanner Offline</p>
-                            </div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </NeuralCard>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <NeuralCard className="h-[450px] flex flex-col">
-                    <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-brand-blue/10 rounded-lg">
-                                <TrendingUp className="text-brand-blue" size={20} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <NeuralCard className="lg:col-span-2 h-[450px] flex flex-col relative overflow-hidden bg-[var(--bg-secondary)] border-[var(--card-border)]">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 rounded-full blur-[120px] -mr-40 -mt-40 pointer-events-none" />
+                    <div className="flex justify-between items-center mb-10 relative z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 border border-white/10 shadow-inner">
+                                <TrendingUp size={24} />
                             </div>
-                            <h4 className="text-lg font-bold">Revenue Manifest</h4>
+                            <div>
+                                <h4 className="text-xl font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Economic Trajectory</h4>
+                                <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-1">Growth Forecast v5.0</p>
+                            </div>
                         </div>
-                        <NeuralBadge variant="success">Real-time sync</NeuralBadge>
+                        <div className="flex bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--card-border)]">
+                            {['7D', '30D', '90D'].map(d => (
+                                <button key={d} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${d === '30D' ? 'bg-[var(--btn-secondary-bg)] text-[var(--text-primary)] shadow-lg' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+                                    {d}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-h-0 relative z-10">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={[{ x: 'Start', y: 0 }, { x: 'Current', y: stats.totalRevenue }]}>
+                            <AreaChart data={[
+                                { x: 'MAR', y: stats.totalRevenue * 0.4 },
+                                { x: 'APR', y: stats.totalRevenue * 0.7 },
+                                { x: 'MAY', y: stats.totalRevenue * 0.8 },
+                                { x: 'JUN', y: stats.totalRevenue * 1.1 },
+                                { x: 'JUL', y: stats.totalRevenue }
+                            ]}>
                                 <defs>
-                                    <linearGradient id="colorY" x1="0" y1="0" x2="0" y2="1">
+                                    <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis dataKey="x" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
-                                <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val / 1000}k`} />
-                                <RechartsTooltip
-                                    contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
-                                    itemStyle={{ color: '#fff' }}
-                                    labelStyle={{ color: '#fff' }}
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" vertical={false} />
+                                <XAxis
+                                    dataKey="x"
+                                    stroke="transparent"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tick={{ fill: 'var(--text-secondary)', fontWeight: 900 }}
+                                    dy={10}
                                 />
-                                <Area type="monotone" dataKey="y" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorY)" />
+                                <YAxis
+                                    stroke="transparent"
+                                    fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickFormatter={(val) => `₹${val / 1000}k`}
+                                    tick={{ fill: 'var(--text-secondary)', fontWeight: 900 }}
+                                />
+                                <RechartsTooltip
+                                    cursor={{ stroke: '#3b82f6', strokeWidth: 1 }}
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-[var(--tooltip-bg)] border border-[var(--card-border)] p-4 rounded-2xl shadow-2xl backdrop-blur-xl">
+                                                    <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-1">{payload[0].payload.x} METRIC</p>
+                                                    <p className="text-lg font-black text-[var(--tooltip-text)] italic tracking-tighter">₹{payload[0].value.toLocaleString()}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="y"
+                                    stroke="#3b82f6"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorMain)"
+                                    animationDuration={2000}
+                                />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </NeuralCard>
 
-                <NeuralCard className="h-[450px] flex flex-col">
-                    <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-brand-pink/10 rounded-lg">
-                                <Activity className="text-brand-pink" size={20} />
+                <NeuralCard className="h-[450px] flex flex-col bg-[var(--bg-secondary)] border-[var(--card-border)]">
+                    <div className="flex justify-between items-center mb-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[var(--card-bg)] rounded-2xl flex items-center justify-center text-pink-400 border border-[var(--card-border)] shadow-inner">
+                                <Activity size={24} />
                             </div>
-                            <h4 className="text-lg font-bold">Inventory Flow</h4>
+                            <div>
+                                <h4 className="text-xl font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Asset Spread</h4>
+                                <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-1">Category Distribution</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex-1 flex items-center justify-center">
+                    <div className="flex-1 min-h-0 relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={distributionData}
                                     cx="50%"
-                                    cy="50%"
-                                    innerRadius={80}
-                                    outerRadius={120}
+                                    cy="45%"
+                                    innerRadius={75}
+                                    outerRadius={105}
                                     paddingAngle={8}
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {distributionData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        <Cell key={`cell-${index}`} fill={['#3b82f6', '#ec4899', '#10b981', '#f59e0b'][index % 4]} />
                                     ))}
                                 </Pie>
-                                <RechartsTooltip
-                                    contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
-                                    itemStyle={{ color: '#fff' }}
-                                    labelStyle={{ color: '#fff' }}
+                                <Legend
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    layout="horizontal"
+                                    iconType="circle"
+                                    iconSize={8}
+                                    formatter={(value) => <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">{value}</span>}
                                 />
-                                <Legend verticalAlign="bottom" iconType="circle" />
+                                <RechartsTooltip
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-[var(--tooltip-bg)] border border-[var(--card-border)] p-4 rounded-2xl shadow-2xl">
+                                                    <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest mb-2">{payload[0].name}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: payload[0].payload.fill }} />
+                                                        <p className="text-sm font-black text-[var(--tooltip-text)]">{payload[0].value} Units</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
+                        {/* Center Text for Pie */}
+                        <div className="absolute inset-x-0 top-[45%] -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-1">TOTAL</span>
+                            <span className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter leading-none">{stats.totalProducts}</span>
+                        </div>
                     </div>
                 </NeuralCard>
             </div>
@@ -395,63 +417,91 @@ const AdminDashboard = () => {
                     <div className="flex justify-between items-center mb-8">
                         <div className="flex items-center gap-3">
                             <Clock className="text-brand-blue" size={20} />
-                            <h4 className="text-lg font-bold">Recent Operative Logs</h4>
+                            <h4 className="text-lg font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Neural Operative Logs</h4>
                         </div>
-                        <button className="text-[10px] font-extrabold text-brand-blue uppercase tracking-widest hover:underline">
-                            View Archive
+                        <button className="text-[10px] font-black text-brand-blue uppercase tracking-widest border border-brand-blue/20 px-4 py-2 rounded-xl hover:bg-brand-blue hover:text-white transition-all">
+                            Archive Access
                         </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                         {stats.recentOrders.length > 0 ? stats.recentOrders.map((order, idx) => (
                             <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 * idx }}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.05 * idx }}
                                 key={order._id}
-                                className="flex items-center justify-between p-4 rounded-2xl bg-[var(--input-bg)] border border-[var(--card-border)] hover:bg-[var(--btn-secondary-bg)] transition-all"
+                                className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-[24px] bg-white/5 border border-white/5 hover:border-white/20 transition-all gap-4"
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-blue/20 to-brand-pink/20 flex items-center justify-center text-brand-blue font-bold">
-                                        <ShoppingCart size={18} />
+                                <div className="flex items-center gap-4 w-full sm:w-auto overflow-hidden">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent border border-[var(--card-border)] flex items-center justify-center text-brand-blue">
+                                        <ShoppingCart size={20} className="group-hover:scale-110 transition-transform" />
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-sm text-[var(--text-primary)]">Order #{order._id.slice(-6)}</p>
-                                        <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-widest">
-                                            By <span className="text-brand-blue">{order.user?.name || 'Unknown'}</span> • {new Date(order.createdAt).toLocaleTimeString()}
-                                        </p>
+                                    <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                        <p className="font-black text-[var(--text-primary)] uppercase italic tracking-tight truncate text-xs sm:text-sm leading-snug">Sync Vector #{order._id.slice(-6).toUpperCase()}</p>
+                                        <div className="flex items-center gap-1.5 pt-1">
+                                            <span className="text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-widest shrink-0">Operative:</span>
+                                            <span className="text-[9px] text-brand-blue font-black uppercase tracking-widest truncate">{order.user?.name || 'ROOT'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-black text-emerald-400">+₹{order.totalAmount.toLocaleString()}</p>
-                                    <p className="text-[9px] text-[var(--text-secondary)] font-bold uppercase tracking-widest">Completed</p>
+                                <div className="w-full sm:w-auto flex flex-row sm:flex-col justify-between items-center sm:items-end shrink-0 pl-0 sm:pl-4">
+                                    <p className="text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-widest sm:hidden">{new Date(order.createdAt).toLocaleTimeString()}</p>
+                                    <div className="text-right">
+                                        <p className="font-black text-emerald-500 text-base sm:text-lg italic tracking-tighter text-right">+₹{order.totalAmount.toLocaleString()}</p>
+                                        <div className="flex items-center justify-end gap-1.5 text-[8px] sm:text-[9px] text-emerald-500/60 font-black uppercase tracking-[0.2em]">
+                                            <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> Finalized
+                                        </div>
+                                    </div>
                                 </div>
                             </motion.div>
                         )) : (
-                            <p className="text-center py-12 text-[var(--text-secondary)] font-bold uppercase tracking-widest text-xs">No Recent Logs</p>
+                            <p className="text-center py-20 text-white/20 font-black uppercase tracking-[0.4em] text-xs">Awaiting Synchronization...</p>
                         )}
                     </div>
                 </NeuralCard>
 
                 <div className="space-y-8">
-                    <NeuralCard className="bg-emerald-500/5 border-emerald-500/10" delay={0.7}>
-                        <div className="flex items-center gap-3 mb-6">
-                            <ShieldCheck className="text-emerald-400" size={20} />
-                            <h4 className="text-sm font-bold uppercase tracking-widest">System Integrity</h4>
+                    <NeuralCard className="bg-emerald-500/5 border-emerald-500/10 relative overflow-hidden" delay={0.7}>
+                        <div className="absolute bottom-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[60px]" />
+                        <div className="flex items-center gap-3 mb-8">
+                            <ShieldCheck className="text-emerald-400" size={24} />
+                            <h4 className="text-sm font-black uppercase italic tracking-tighter text-[var(--text-primary)]">System Integrity</h4>
                         </div>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center text-[11px] font-bold">
-                                <span className="text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                                    <Database size={12} /> Neural Core
-                                </span>
-                                <span className="text-emerald-400">OPTIMAL</span>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] leading-none">
+                                    <span className="flex items-center gap-2">
+                                        Neural Core <span className="text-emerald-400">NOMINAL</span>
+                                    </span>
+                                    <span>98%</span>
+                                </div>
+                                <div className="w-full bg-[var(--input-bg)] h-2 rounded-full overflow-hidden">
+                                    <motion.div initial={{ width: 0 }} animate={{ width: '98%' }} transition={{ duration: 2 }} className="bg-emerald-400 h-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                                </div>
                             </div>
-                            <div className="w-full bg-[var(--input-bg)] h-1 rounded-full overflow-hidden">
-                                <div className="bg-emerald-400 h-full w-[85%] animate-pulse" />
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] leading-none">
+                                    <span className="flex items-center gap-2">
+                                        Sync Hub <span className="text-blue-400">ACTIVE</span>
+                                    </span>
+                                    <span>24ms</span>
+                                </div>
+                                <div className="w-full bg-[var(--input-bg)] h-2 rounded-full overflow-hidden">
+                                    <motion.div initial={{ width: 0 }} animate={{ width: '60%' }} transition={{ duration: 2, delay: 0.5 }} className="bg-blue-400 h-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-[11px] font-bold pt-2">
-                                <span className="text-[var(--text-secondary)] uppercase tracking-widest">Uptime Protcol</span>
-                                <span className="text-[var(--text-primary)]">99.98%</span>
+
+                            <div className="pt-4 grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-[var(--input-bg)] rounded-2xl border border-[var(--card-border)]">
+                                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Uptime</p>
+                                    <p className="text-sm font-black text-[var(--text-primary)] italic">99.99%</p>
+                                </div>
+                                <div className="p-3 bg-[var(--input-bg)] rounded-2xl border border-[var(--card-border)]">
+                                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Nodes</p>
+                                    <p className="text-sm font-black text-[var(--text-primary)] italic">14 Alive</p>
+                                </div>
                             </div>
                         </div>
                     </NeuralCard>
@@ -468,153 +518,12 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div id="neural-feed">
+                <div id="neural-feed" className="w-full">
                     <NeuralNotifications />
                 </div>
-                <MessagingSection />
+                <SystemMetricsChart stats={stats} />
             </div>
         </div>
-    );
-};
-
-const MessagingSection = () => {
-    const [users, setUsers] = useState([]);
-    const [targetEmail, setTargetEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [messages, setMessages] = useState([]);
-
-    const fetchMessages = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/messages', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMessages(data);
-        } catch (error) { console.error("Msg Error", error); }
-    };
-
-
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:6700/api/dashboard/users-list', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setUsers(data);
-            } catch (error) { console.error(error); }
-        };
-        fetchUsers();
-        fetchMessages();
-        const interval = setInterval(fetchMessages, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const sendMessage = async (e) => {
-        e.preventDefault();
-        if (!targetEmail || !message) return alert("Fill all fields");
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const targetUser = users.find(u => u.email === targetEmail);
-            if (!targetUser) { alert("User not found"); setLoading(false); return; }
-
-            await axios.post('http://localhost:6700/api/messages',
-                { receiverId: targetUser._id, content: message },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            alert("Message dispatched successfully.");
-            setMessage('');
-            fetchMessages();
-        } catch (error) {
-            alert(error.response?.data?.message || "Failed to send");
-        }
-        setLoading(false);
-    };
-
-    return (
-        <NeuralCard className="p-0 overflow-hidden border-none" delay={0.9} id="neural-feed">
-            <div className="relative group p-10 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca]">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-
-                <div className="relative z-10 flex flex-col md:flex-row gap-12">
-                    <div className="md:w-1/3 space-y-6 flex flex-col">
-                        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
-                            <Send className="text-white animate-bounce" size={28} />
-                        </div>
-                        <div className="space-y-2">
-                            <h3 className="text-3xl font-black tracking-tight text-white uppercase italic">Neural Sync</h3>
-                            <p className="text-white/60 text-sm leading-relaxed">
-                                Encrypted link to field operatives.
-                            </p>
-                        </div>
-                        <div className="flex-1 bg-black/20 rounded-xl p-4 overflow-y-auto custom-scrollbar min-h-[300px] max-h-[400px]">
-                            {messages.filter(msg => msg.sender.role !== 'sales' && msg.sender.role !== 'admin' && msg.sender.role !== 'manager').length === 0 && <p className="text-white/40 text-xs text-center flex items-center justify-center h-full">No incoming signals.</p>}
-                            {messages.filter(msg => msg.sender.role !== 'sales' && msg.sender.role !== 'admin' && msg.sender.role !== 'manager').map(msg => (
-                                <div key={msg._id} className="mb-4">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <p className="text-[11px] font-bold text-emerald-400">
-                                            {msg.sender.name} <span className="text-white/40">[{msg.sender.role.toUpperCase()}]</span>
-                                        </p>
-                                        <p className="text-[9px] text-white/30">{new Date(msg.createdAt).toLocaleTimeString()}</p>
-                                    </div>
-                                    <p className="text-sm text-white/90 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">{msg.content}</p>
-                                </div>
-                            ))}
-
-                        </div>
-
-
-                    </div>
-
-                    <form onSubmit={sendMessage} className="flex-1 space-y-6">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Select Operative</label>
-                            <select
-                                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all text-sm appearance-none"
-                                value={targetEmail}
-                                onChange={e => setTargetEmail(e.target.value)}
-                                required
-                            >
-                                <option value="" className="bg-[#1e1b4b]">Identify Target...</option>
-                                {users.map(u => (
-                                    <option key={u.email} value={u.email} className="bg-[#1e1b4b]">
-                                        {u.name} [{u.role.toUpperCase()}]
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Encypted Content</label>
-                            <textarea
-                                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all min-h-[120px] text-sm"
-                                placeholder="Enter directive parameters..."
-                                value={message}
-                                onChange={e => setMessage(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="flex justify-end">
-                            <NeuralButton
-                                type="submit"
-                                disabled={loading}
-                                className="min-w-[200px] h-14 bg-white text-[#1e1b4b] hover:bg-white/90 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                            >
-                                {loading ? 'Transmitting...' : (
-                                    <span className="flex items-center gap-3">
-                                        INITIALIZE SYNC <Send size={18} />
-                                    </span>
-                                )}
-                            </NeuralButton>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </NeuralCard >
     );
 };
 

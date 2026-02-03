@@ -1,173 +1,155 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Bell,
-    MessageSquare,
-    Clock,
-    CheckCircle2,
-    Info,
-    AlertCircle,
-    ChevronDown,
-    User
-} from 'lucide-react';
-import NeuralCard from './ui/NeuralCard';
-import NeuralBadge from './ui/NeuralBadge';
+import { Clock, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, LayoutPanelTop, Activity, Zap } from 'lucide-react';
 
 const NeuralNotifications = () => {
-    const [notifications, setNotifications] = useState([]);
+    const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [expandedId, setExpandedId] = useState(null);
 
     const fetchNotifications = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/dashboard/notifications', {
-                headers: { Authorization: `Bearer ${token}` }
+            let token = localStorage.getItem('token');
+            if (!token) {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    token = JSON.parse(userInfo).token;
+                }
+            }
+
+            if (!token) {
+                console.log('NeuralNotifications: No token found');
+                setLoading(false);
+                return;
+            }
+
+            const response = await fetch('/api/notifications', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
-            setNotifications(data);
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                const formattedEvents = data.map(notif => ({
+                    id: notif._id,
+                    type: notif.title.toLowerCase().includes('approved') || notif.title.toLowerCase().includes('verified') ? 'success' :
+                        notif.title.toLowerCase().includes('alert') || notif.title.toLowerCase().includes('reject') ? 'danger' : 'info',
+                    title: notif.title,
+                    desc: notif.message,
+                    time: new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }));
+                setEvents(formattedEvents);
+            }
+            setLoading(false);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
-        } finally {
+            // Optionally set items to show error in UI
             setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // 30s poll
+        const interval = setInterval(fetchNotifications, 10000); // Polling every 10 seconds
         return () => clearInterval(interval);
     }, []);
 
-    const sendTestSignal = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:6700/api/dashboard/test-notification', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchNotifications();
-        } catch (error) {
-            console.error('Test signal failed:', error);
-        }
-    };
-
-    if (loading) return (
-        <div className="py-12 flex justify-center">
-            <div className="w-8 h-8 border-2 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin" />
-        </div>
-    );
-
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center">
-                        <Bell className="text-brand-blue" size={18} />
+                    <div className="relative">
+                        <LayoutPanelTop className="text-brand-blue" size={24} />
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 border border-black"></span>
+                        </span>
                     </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] tracking-tight uppercase text-sm italic">Neural Feed</h4>
-                        <p className="text-[10px] font-extrabold text-[var(--text-secondary)] tracking-[0.2em] uppercase">Incoming Directives</p>
-                    </div>
+                    <h4 className="text-lg font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Live Neural Feed</h4>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={sendTestSignal}
-                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded-lg hover:bg-brand-blue/20 transition-colors"
-                    >
-                        Test Signal
-                    </button>
-                    <NeuralBadge variant={notifications.length > 0 ? 'success' : 'pending'}>
-                        {notifications.length} Active Signal{notifications.length !== 1 ? 's' : ''}
-                    </NeuralBadge>
+                <div className="flex items-center gap-2 px-3 py-1 bg-[var(--input-bg)] rounded-full border border-[var(--card-border)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Encrypted Stream</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-                <AnimatePresence mode='popLayout'>
-                    {notifications.length > 0 ? notifications.map((notif, idx) => (
-                        <motion.div
-                            key={notif._id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                        >
-                            <NeuralCard
-                                className={`p-0 overflow-hidden border-[var(--card-border)] transition-all duration-300 ${expandedId === notif._id ? 'border-brand-blue/30 bg-[var(--card-bg)] shadow-brand-blue/20 shadow-lg' : 'bg-[var(--card-bg)] hover:bg-opacity-80'}`}
-                                variant="default"
+            <div className="grid gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <AnimatePresence mode="popLayout">
+                    {loading ? (
+                        <div className="text-center py-8 text-[var(--text-secondary)] animate-pulse">
+                            Initializing Neural Stream...
+                        </div>
+                    ) : events.length === 0 ? (
+                        <div className="text-center py-8 text-[var(--text-secondary)] font-medium text-sm">
+                            No active signals in neural buffer.
+                        </div>
+                    ) : (
+                        events.map((event, idx) => (
+                            <motion.div
+                                key={event.id}
+                                initial={{ opacity: 0, x: -20, scale: 0.95 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                                layout
+                                className={`group relative p-4 rounded-2xl border transition-all ${event.type === 'success' ? 'bg-emerald-500/5 border-emerald-500/10' :
+                                    event.type === 'warning' ? 'bg-amber-500/5 border-amber-500/10' :
+                                        event.type === 'danger' ? 'bg-rose-500/5 border-rose-500/10' :
+                                            'bg-brand-blue/5 border-brand-blue/10'
+                                    }`}
                             >
-                                <div
-                                    className="p-5 cursor-pointer flex items-center gap-4"
-                                    onClick={() => setExpandedId(expandedId === notif._id ? null : notif._id)}
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center border border-white/10 shrink-0">
-                                        <MessageSquare size={18} className={expandedId === notif._id ? 'text-brand-blue' : 'text-white/40'} />
+                                <div className="flex items-start gap-4">
+                                    <div className={`mt-1 p-2 rounded-xl border ${event.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/20 text-emerald-400' :
+                                        event.type === 'warning' ? 'bg-amber-500/20 border-amber-500/20 text-amber-400' :
+                                            event.type === 'danger' ? 'bg-rose-500/20 border-rose-500/20 text-rose-400' :
+                                                'bg-brand-white/10 border-white/20 text-brand-blue'
+                                        }`}>
+                                        {event.type === 'success' ? <CheckCircle2 size={16} /> :
+                                            event.type === 'warning' ? <AlertCircle size={16} /> :
+                                                event.type === 'danger' ? <Activity size={16} /> :
+                                                    <Clock size={16} />}
                                     </div>
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-0.5">
-                                            <h5 className="font-bold text-sm text-[var(--text-primary)] truncate pr-4 uppercase tracking-wide">
-                                                {notif.title}
-                                            </h5>
-                                            <span className="text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5">
-                                                <Clock size={10} />
-                                                {new Date(notif.createdAt).toLocaleDateString()}
-                                            </span>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex justify-between items-center">
+                                            <h5 className="font-bold text-sm tracking-tight text-[var(--text-primary)]">{event.title}</h5>
+                                            <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">{event.time}</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[var(--btn-secondary-bg)] rounded-md border border-[var(--card-border)]">
-                                                <User size={10} className="text-[var(--text-secondary)]" />
-                                                <span className="text-[9px] font-black text-brand-blue uppercase tracking-widest leading-none">
-                                                    {notif.from?.name || 'Central Command'}
-                                                </span>
-                                            </div>
-                                            <span className="text-[8px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] italic">
-                                                [{notif.from?.role || 'SYSTEM'}]
-                                            </span>
-                                        </div>
+                                        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{event.desc}</p>
                                     </div>
-
-                                    <motion.div
-                                        animate={{ rotate: expandedId === notif._id ? 180 : 0 }}
-                                        className="text-[var(--text-secondary)]"
-                                    >
-                                        <ChevronDown size={16} />
-                                    </motion.div>
                                 </div>
 
-                                <AnimatePresence>
-                                    {expandedId === notif._id && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-                                        >
-                                            <div className="px-5 pb-5 pt-0">
-                                                <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--card-border)] text-sm text-[var(--text-primary)] leading-relaxed font-medium">
-                                                    {notif.message}
-                                                    <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex justify-end">
-                                                        <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Signal Verified // Secure Link</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </NeuralCard>
-                        </motion.div>
-                    )) : (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="py-20 text-center space-y-4 rounded-3xl border-2 border-dashed border-[var(--card-border)]"
-                        >
-                            <div className="w-16 h-16 bg-[var(--card-bg)] rounded-full flex items-center justify-center mx-auto opacity-20">
-                                <Bell size={32} className="text-[var(--text-secondary)]" />
-                            </div>
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.4em]">Zero incoming signals detected</p>
-                        </motion.div>
+                                {/* Decorative Corner */}
+                                <div className="absolute top-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${event.type === 'success' ? 'bg-emerald-500' : 'bg-brand-blue'
+                                        }`} />
+                                </div>
+                            </motion.div>
+                        ))
                     )}
                 </AnimatePresence>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-[var(--input-bg)] border border-[var(--card-border)] space-y-1">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Live Traffic</p>
+                    <div className="flex items-end gap-2">
+                        <TrendingUp className="text-emerald-400 mb-1" size={16} />
+                        <span className="text-xl font-black italic text-[var(--text-primary)]">1,402</span>
+                        <span className="text-[10px] text-emerald-400 font-bold ml-1 mb-1">+12%</span>
+                    </div>
+                </div>
+                <div className="flex-1 p-4 rounded-2xl bg-[var(--input-bg)] border border-[var(--card-border)] space-y-1">
+                    <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Signal Latency</p>
+                    <div className="flex items-end gap-2">
+                        <TrendingDown className="text-blue-400 mb-1" size={16} />
+                        <span className="text-xl font-black italic text-[var(--text-primary)]">24<span className="text-[var(--text-secondary)] text-xs italic opacity-40">ms</span></span>
+                        <span className="text-[10px] text-blue-400 font-bold ml-1 mb-1">-4ms</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

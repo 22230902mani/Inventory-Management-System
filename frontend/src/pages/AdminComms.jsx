@@ -30,30 +30,42 @@ const AdminComms = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleSendMessage = async (content) => {
+    const handleSendMessage = async (content, file) => {
         try {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            // Send to Admin (receiverId: null represents System/Admin in our simplified backend logic)
-            // Or if we want to be explicit, we could fetch admin ID, but 'null' works for general 'Admin' box often.
-            // Let's assume sending to 'null' for now as per previous patterns or use known Admin ID convention.
-            // Actually, best to fetch Admin ID once if needed, but `receiverId: null` is often used for "Support/Admin".
-            // Let's verify backend handling of null receiver... 
-            // `sendMessage`: `receiver: receiverId`.
-            // `getManagerMessages` (Admin) fetches `receiver: req.user._id` OR `receiver: null`.
-            // So sending to `null` puts it in the Admin's "Global/System" inbox view.
-            // This is perfect.
+            let attachmentPath = null;
 
+            // 1. Upload File if present
+            if (file) {
+                const formData = new FormData();
+                formData.append('images', file);
+
+                const uploadRes = await axios.post('http://localhost:6700/api/upload', formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (uploadRes.data.filePaths && uploadRes.data.filePaths.length > 0) {
+                    attachmentPath = uploadRes.data.filePaths[0];
+                }
+            }
+
+            // 2. Send message to Admin (receiverId: null represents Admin)
             await axios.post('http://localhost:6700/api/messages',
-                { receiverId: null, content },
+                {
+                    receiverId: null,
+                    content: content || (file ? "Sent an attachment" : ""),
+                    attachment: attachmentPath
+                },
                 config
             );
 
+            // Refresh messages immediately to show updated status
             fetchMessages();
         } catch (error) {
             console.error("Error sending message", error);
-            alert("Failed to transmit. Secure link unstable.");
+            alert(`Transmission Error: ${error.response?.data?.message || error.message}`);
         }
     };
 

@@ -29,6 +29,8 @@ app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes')); // Stats
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 6700;

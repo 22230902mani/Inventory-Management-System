@@ -59,7 +59,7 @@ const Chatbot = () => {
     };
 
     return (
-        <div className="fixed bottom-8 right-8 z-[10000] font-sans">
+        <div className="chatbot-container fixed bottom-20 right-4 sm:bottom-8 sm:right-8 z-[10000] font-sans flex flex-col items-end">
             {/* Pulsing Trigger Button */}
             <AnimatePresence>
                 {!isOpen && (
@@ -70,7 +70,7 @@ const Chatbot = () => {
                         whileHover={{ scale: 1.1, rotate: 10 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={toggleChat}
-                        className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-blue to-brand-pink p-[2px] shadow-lg shadow-brand-blue/30 group overflow-hidden"
+                        className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-brand-blue to-brand-pink p-[2px] shadow-lg shadow-brand-blue/30 group overflow-hidden"
                     >
                         <div className="w-full h-full bg-[var(--bg-primary)] rounded-[14px] flex items-center justify-center relative overflow-hidden">
                             <Bot className="text-[var(--text-primary)] relative z-10 group-hover:scale-110 transition-transform" size={28} />
@@ -89,7 +89,7 @@ const Chatbot = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 50 }}
                         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                        className="w-[400px] h-[600px] flex flex-col"
+                        className="w-[calc(100vw-32px)] sm:w-[400px] h-[550px] sm:h-[600px] max-h-[75vh] flex flex-col"
                     >
                         <NeuralCard className="flex-1 flex flex-col p-0 overflow-hidden border-brand-blue/20" variant="default">
                             {/* Header */}
@@ -173,7 +173,7 @@ const Chatbot = () => {
                                 <div className="flex gap-3 items-center">
                                     <div className="flex-1 relative group">
                                         <NeuralInput
-                                            className="pr-12 bg-white/5 border-white/10 h-12 focus:ring-brand-blue/20"
+                                            className="pr-12 bg-[var(--input-bg)] border-[var(--card-border)] h-12 focus:ring-brand-blue/20"
                                             placeholder="Transmit command..."
                                             value={input}
                                             onChange={e => setInput(e.target.value)}

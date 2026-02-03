@@ -22,8 +22,10 @@ import NeuralBadge from '../components/ui/NeuralBadge';
 import NeuralButton from '../components/ui/NeuralButton';
 import NeuralInput from '../components/ui/NeuralInput';
 import NeuralNotifications from '../components/NeuralNotifications';
+import { useToast } from '../context/ToastContext';
 
 const UserDashboard = () => {
+    const { addToast } = useToast();
     const [products, setProducts] = useState([]);
     const [myOrders, setMyOrders] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -44,9 +46,9 @@ const UserDashboard = () => {
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const pRes = await axios.get('http://localhost:6700/api/inventory', { headers: { Authorization: `Bearer ${token}` } });
+            const pRes = await axios.get('/api/inventory', { headers: { Authorization: `Bearer ${token}` } });
             setProducts(pRes.data);
-            const oRes = await axios.get('http://localhost:6700/api/orders/my-orders', { headers: { Authorization: `Bearer ${token}` } });
+            const oRes = await axios.get('/api/orders/my-orders', { headers: { Authorization: `Bearer ${token}` } });
             setMyOrders(oRes.data);
         } catch (e) { console.error(e); }
     };
@@ -67,6 +69,7 @@ const UserDashboard = () => {
             if (existing) return prev.map(item => item._id === product._id ? { ...item, cartQty: item.cartQty + 1 } : item);
             return [...prev, { ...product, cartQty: 1 }];
         });
+        addToast(`${product.name} added to acquisition queue`, 'info', 2000);
     };
 
     const openOrderModal = (product) => {
@@ -80,7 +83,7 @@ const UserDashboard = () => {
     };
 
     const handleConfirmOrder = async () => {
-        if (utrNumber.length !== 12) return alert("Please enter a valid 12-digit UTR number.");
+        if (utrNumber.length !== 12) return addToast("Invalid protocol: 12-digit UTR required", "warning", 3000);
         const fullShippingAddress = `To: ${shipName}, Ph: ${shipPhone}, \nAddr: ${shipAddress}, \nPin: ${shipPincode}`;
         try {
             const token = localStorage.getItem('token');
@@ -92,12 +95,14 @@ const UserDashboard = () => {
                 totalAmount = selectedProduct.price * orderQty;
                 items = [{ product: selectedProduct._id, quantity: parseInt(orderQty), priceAtPurchase: selectedProduct.price }];
             }
-            await axios.post('http://localhost:6700/api/orders', { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post('/api/orders', { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
             setShowOrderModal(false);
             if (isCartCheckout) setCart([]);
-            alert("Order Placed Successfully!");
+            addToast("Order Placed Successfully!", 'success', 5000);
             fetchData();
-        } catch (error) { alert(error.message); }
+        } catch (error) {
+            addToast(error.response?.data?.message || error.message, 'error', 5000);
+        }
     };
 
     const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -105,15 +110,15 @@ const UserDashboard = () => {
     return (
         <div className="space-y-8">
             {/* Top Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <NeuralCard gradient="blue" delay={0.1}>
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-1">Secured Assets</p>
-                            <h3 className="text-3xl font-bold text-[var(--text-primary)]">{myOrders.length}</h3>
+                            <h3 className="text-xl sm:text-3xl font-bold text-[var(--text-primary)]">{myOrders.length}</h3>
                         </div>
-                        <div className="p-3 bg-blue-500/20 rounded-xl">
-                            <History className="text-blue-400" size={20} />
+                        <div className="p-2 sm:p-3 bg-blue-500/20 rounded-xl">
+                            <History className="text-blue-400" size={18} />
                         </div>
                     </div>
                 </NeuralCard>
@@ -122,10 +127,10 @@ const UserDashboard = () => {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-1">Acquisition Queue</p>
-                            <h3 className="text-3xl font-bold text-[var(--text-primary)]">{cart.reduce((acc, item) => acc + item.cartQty, 0)}</h3>
+                            <h3 className="text-xl sm:text-3xl font-bold text-[var(--text-primary)]">{cart.reduce((acc, item) => acc + item.cartQty, 0)}</h3>
                         </div>
-                        <div className="p-3 bg-pink-500/20 rounded-xl relative">
-                            <ShoppingCart className="text-pink-400" size={20} />
+                        <div className="p-2 sm:p-3 bg-pink-500/20 rounded-xl relative">
+                            <ShoppingCart className="text-pink-400" size={18} />
                             {cart.length > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-pink-400 rounded-full animate-ping" />}
                         </div>
                     </div>
@@ -135,10 +140,10 @@ const UserDashboard = () => {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-1">Global Inventory</p>
-                            <h3 className="text-3xl font-bold text-[var(--text-primary)]">{products.length}</h3>
+                            <h3 className="text-xl sm:text-3xl font-bold text-[var(--text-primary)]">{products.length}</h3>
                         </div>
-                        <div className="p-3 bg-emerald-500/20 rounded-xl">
-                            <Package className="text-emerald-400" size={20} />
+                        <div className="p-2 sm:p-3 bg-emerald-500/20 rounded-xl">
+                            <Package className="text-emerald-400" size={18} />
                         </div>
                     </div>
                 </NeuralCard>
@@ -166,9 +171,9 @@ const UserDashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <AnimatePresence mode='popLayout'>
-                        {filteredProducts.map((p, idx) => (
+                        {(searchQuery.trim() === '' ? filteredProducts.slice(0, 3) : filteredProducts).map((p, idx) => (
                             <NeuralCard key={p._id} delay={idx * 0.05} className="group flex flex-col h-full bg-white/[0.02]">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="space-y-1">
@@ -215,7 +220,7 @@ const UserDashboard = () => {
             {/* Cart Modal Overhaul */}
             <AnimatePresence>
                 {showCartModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -227,7 +232,7 @@ const UserDashboard = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-lg neural-glass bg-[var(--bg-primary)] border-[var(--card-border)] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.1)]"
+                            className="relative w-full max-w-lg neural-glass bg-[var(--bg-primary)] border-[var(--card-border)] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.1)] rounded-3xl"
                         >
                             <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent">
                                 <div className="flex items-center gap-3">
@@ -300,7 +305,7 @@ const UserDashboard = () => {
             {/* Order/Payment Modal Overhaul */}
             <AnimatePresence>
                 {showOrderModal && selectedProduct && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -310,9 +315,9 @@ const UserDashboard = () => {
                         />
                         <motion.div
                             layout
-                            className="relative w-full max-w-md neural-glass bg-black border-white/10 overflow-hidden"
+                            className="relative w-full max-w-md neural-glass bg-[var(--bg-primary)] border-[var(--card-border)] overflow-hidden rounded-3xl max-h-[85vh] flex flex-col scale-[0.95] sm:scale-100 shadow-2xl"
                         >
-                            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                            <div className="p-6 border-b border-[var(--card-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-brand-blue/20 rounded-lg">
                                         {isPaymentStep ? <CreditCard className="text-brand-blue" size={20} /> : <MapPin className="text-brand-blue" size={20} />}
@@ -323,13 +328,13 @@ const UserDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="p-6 space-y-6">
+                            <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                                 {!isPaymentStep ? (
                                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
                                         <NeuralInput label="Target Operative" icon={UserIcon} placeholder="Full legal name" value={shipName} onChange={e => setShipName(e.target.value)} />
                                         <NeuralInput label="Comm Link" icon={Phone} placeholder="Phone number" value={shipPhone} onChange={e => setShipPhone(e.target.value)} />
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.2em] ml-1">Drop Zone Address</label>
+                                            <label className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] ml-1">Drop Zone Address</label>
                                             <textarea className="input-neural min-h-[100px] py-4" placeholder="Full logistics intersection" value={shipAddress} onChange={e => setShipAddress(e.target.value)} />
                                         </div>
                                         <NeuralInput label="Grid Sector (Pincode)" placeholder="6-digit sector" value={shipPincode} onChange={e => setShipPincode(e.target.value)} />
@@ -349,7 +354,7 @@ const UserDashboard = () => {
                                         </div>
 
                                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                                            <NeuralInput label="Transmission ID (UTR/TXN)" className="text-center text-lg font-black tracking-[0.2em]" placeholder="0000 0000 0000" value={utrNumber} onChange={e => setUtrNumber(e.target.value)} />
+                                            <NeuralInput label="Transmission ID (UTR/TXN)" className="text-center text-sm sm:text-lg font-black tracking-[0.1em] sm:tracking-[0.2em]" placeholder="0000 0000 0000" value={utrNumber} onChange={e => setUtrNumber(e.target.value)} />
                                             <p className="text-[9px] text-white/30 mt-3 font-bold uppercase tracking-widest">Validate 12-digit protocol from bank manifest</p>
                                         </div>
                                     </motion.div>

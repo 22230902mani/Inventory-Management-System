@@ -11,7 +11,7 @@ exports.getProducts = async (req, res) => {
             }
         } : {};
 
-        const products = await Product.find({ ...keyword, status: 'active' });
+        const products = await Product.find({ ...keyword, status: 'active' }).populate('addedBy', 'name email');
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -104,7 +104,9 @@ exports.getProductByBarcode = async (req, res) => {
 exports.getPendingProducts = async (req, res) => {
     try {
         // Populate addedBy to show who proposed it
-        const products = await Product.find({ status: 'pending' }).populate('addedBy', 'name email');
+        const products = await Product.find({ addedBy: { $ne: null } })
+            .populate('addedBy', 'name email')
+            .sort({ createdAt: -1 });
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -119,6 +121,16 @@ exports.approveProduct = async (req, res) => {
         product.status = 'active';
         await product.save();
 
+        // Create Notification for the Sales Person
+        if (product.addedBy) {
+            await Notification.create({
+                to: product.addedBy,
+                from: req.user._id,
+                title: 'Proposal Approved',
+                message: `Excellent news! Your proposal for "${product.name}" has been authorized and deployed to the main grid.`
+            });
+        }
+
         res.json({ message: 'Product approved and active', product });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -132,6 +144,16 @@ exports.rejectProduct = async (req, res) => {
 
         product.status = 'rejected';
         await product.save();
+
+        // Create Notification for the Sales Person
+        if (product.addedBy) {
+            await Notification.create({
+                to: product.addedBy,
+                from: req.user._id,
+                title: 'Proposal Rejected',
+                message: `Strategic Alert: Your proposal for "${product.name}" was not authorized due to protocol violations. Please review and resubmit.`
+            });
+        }
 
         res.json({ message: 'Product rejected', product });
     } catch (error) {

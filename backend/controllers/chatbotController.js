@@ -4,7 +4,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 exports.chatWithAI = async (req, res) => {
     const { query } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    // Masked log for debugging (only shows first 4 and last 4 chars)
+    if (apiKey) {
+        const masked = apiKey.length > 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "****";
+        console.log(`[Neural Link] Initializing with key: ${masked}`);
+    }
 
     try {
         // Fetch Context Data
@@ -20,20 +26,12 @@ exports.chatWithAI = async (req, res) => {
         - Total Business Value: ₹${products.reduce((acc, p) => acc + (p.price * p.quantity), 0)}
         `;
 
-        if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
-            // Simplified fallback if no key is provided
-            return res.json({ response: "I am ready to work like ChatGPT! To unlock my full intelligence, please add your **GEMINI_API_KEY** to the backend `.env` file. \n\nI can still answer basic inventory questions for now." });
+        if (!apiKey || apiKey.startsWith('YOUR_') || apiKey.length < 10) {
+            return res.json({ response: "Neural Link Error: No valid API key detected. Please add a functional **GEMINI_API_KEY** from Google AI Studio to your backend `.env` file." });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        // Using gemini-flash-latest which is confirmed working in Dec 2025.
-        let model;
-        try {
-            model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-        } catch (e) {
-            console.log("Gemini Flash Latest failed to initialize, trying pro");
-            model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
-        }
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `
         You are an Intelligent Inventory Assistant for this specific application. 
@@ -43,36 +41,22 @@ exports.chatWithAI = async (req, res) => {
         User Query: "${query}"
         
         Instructions:
-        1. If the user asks about general topics (like geography, coding, or jokes), answer them like ChatGPT would.
-        2. If the user asks about the business, stock, or orders, use the provided context accurately.
-        3. Be professional, concise, and use emojis where appropriate.
-        4. If the user wants to perform actions you can't do (like "delete my account"), guide them to the right dashboard or ask a manager.
+        1. If the user asks about general topics, answer them like ChatGPT would.
+        2. If the user asks about the business, stock, or orders, use the provided context.
+        3. Be professional, concise, and use emojis.
         `;
 
-        let responseText;
-        try {
-            const result = await model.generateContent(prompt);
-            responseText = result.response.text();
-        } catch (genError) {
-            console.error('Gemini Flash Latest generation failed, trying pro-latest:', genError.message);
-            try {
-                const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
-                const fallbackResult = await fallbackModel.generateContent(prompt);
-                responseText = fallbackResult.response.text();
-            } catch (fallbackError) {
-                console.error('All Gemini models failed:', fallbackError.message);
-                throw fallbackError; // Re-throw to be caught by the outer catch block
-            }
-        }
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
 
         res.json({ response: responseText });
 
     } catch (error) {
-        console.error('AI Error:', error.message);
-        let errorMsg = `AI Error: ${error.message}`;
+        console.error('Final AI Error:', error.message);
+        let errorMsg = `Neural Error: ${error.message}`;
 
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
-            errorMsg = "My AI quota has been exceeded! 😫 Please check your **GEMINI_API_KEY** billing details or wait a moment before trying again. The free tier might be exhausted.";
+            errorMsg = "Neural Bandwidth Exceeded! 😫 Quota limits reached. Please wait or upgrade your API tier.";
         }
 
         res.status(500).json({ response: errorMsg });

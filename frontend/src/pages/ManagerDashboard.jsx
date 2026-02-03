@@ -18,7 +18,8 @@ import {
     Key,
     Boxes,
     Activity,
-    MessageSquare
+    MessageSquare,
+    TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Scanner from '../components/Scanner';
@@ -28,8 +29,10 @@ import NeuralButton from '../components/ui/NeuralButton';
 import NeuralInput from '../components/ui/NeuralInput';
 import NeuralNotifications from '../components/NeuralNotifications';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const ManagerDashboard = () => {
+    const { addToast } = useToast();
     const [stats, setStats] = useState({
         totalProducts: 0,
         lowStockProducts: 0,
@@ -48,7 +51,7 @@ const ManagerDashboard = () => {
     const fetchOrders = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/orders', {
+            const { data } = await axios.get('/api/orders', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(data);
@@ -60,13 +63,13 @@ const ManagerDashboard = () => {
     const verifyPayment = async (orderId, action) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:6700/api/orders/verify-payment', { orderId, action }, {
+            await axios.post('/api/orders/verify-payment', { orderId, action }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert(action === 'approve' ? 'Payment Verified. OTP sent to user.' : 'Payment Rejected. Order Cancelled.');
+            addToast(action === 'approve' ? 'Payment Verified. OTP sent to user.' : 'Payment Rejected. Order Cancelled.', action === 'approve' ? 'success' : 'warning');
             fetchOrders();
         } catch (error) {
-            alert('Action failed: ' + (error.response?.data?.message || error.message));
+            addToast('Action failed: ' + (error.response?.data?.message || error.message), 'error');
         }
     };
 
@@ -74,13 +77,14 @@ const ManagerDashboard = () => {
         if (e) e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get(`http://localhost:6700/api/inventory/barcode/${scanCode}`, {
+            const { data } = await axios.get(`/api/inventory/barcode/${scanCode}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct(data);
             setScanCode('');
+            addToast(`Identified: ${data.name}`, 'info');
         } catch (error) {
-            alert('Product not found or error scanning');
+            addToast('Product not found or error scanning', 'error');
         }
     };
 
@@ -94,7 +98,7 @@ const ManagerDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             const newQty = scannedProduct.quantity + delta;
-            await axios.put(`http://localhost:6700/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
+            await axios.put(`/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct({ ...scannedProduct, quantity: newQty });
@@ -112,15 +116,15 @@ const ManagerDashboard = () => {
         if (!verifyOrderId || !verifyOtp) return alert('Enter ID and OTP');
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:6700/api/orders/${verifyOrderId}/verify-delivery`, { otp: verifyOtp }, {
+            await axios.post(`/api/orders/${verifyOrderId}/verify-delivery`, { otp: verifyOtp }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert('OTP Match! Order Marked as Received.');
+            addToast('OTP Match! Order Marked as Received.', 'success');
             setVerifyOrderId('');
             setVerifyOtp('');
             fetchOrders();
         } catch (e) {
-            alert('Verification Failed: ' + (e.response?.data?.message || 'Invalid OTP'));
+            addToast('Verification Failed: ' + (e.response?.data?.message || 'Invalid OTP'), 'error');
         }
     };
 
@@ -128,7 +132,7 @@ const ManagerDashboard = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:6700/api/dashboard/stats', {
+                const { data } = await axios.get('/api/dashboard/stats', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats({
@@ -152,55 +156,40 @@ const ManagerDashboard = () => {
             {showScanner && <Scanner onScan={handleCamScan} onClose={() => setShowScanner(false)} />}
             {showDeliveryScanner && <Scanner onScan={handleDeliveryScan} onClose={() => setShowDeliveryScanner(false)} />}
 
-            {/* Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <NeuralCard gradient="blue" delay={0.1}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Live Assets</p>
-                            <h3 className="text-2xl font-black text-[var(--text-primary)]">{stats.totalProducts}</h3>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {[
+                    { label: 'Live Assets', mobileLabel: 'ASSETS', value: stats.totalProducts, icon: Boxes, color: 'dark:from-[#172554] dark:to-[#1e3a8a] dark:border-blue-500/20', lightColor: 'bg-blue-100 border-blue-200', iconColor: 'text-blue-600 dark:text-blue-400', trend: 12 },
+                    { label: 'Pending Auth', mobileLabel: 'PENDING', value: pendingVerifications.length, icon: ShieldCheck, color: 'dark:from-[#2e1065] dark:to-[#4c1d95] dark:border-violet-500/20', lightColor: 'bg-violet-100 border-violet-200', iconColor: 'text-violet-600 dark:text-violet-400', trend: -5 },
+                    { label: 'Low Stock Alert', mobileLabel: 'LOW STOCK', value: stats.lowStockProducts, icon: AlertTriangle, color: 'dark:from-[#701a75] dark:to-[#a21caf] dark:border-fuchsia-500/20', lightColor: 'bg-fuchsia-100 border-fuchsia-200', iconColor: 'text-fuchsia-600 dark:text-fuchsia-400', trend: 8 },
+                    { label: 'Depleted Units', mobileLabel: 'DEPLETED', value: stats.outOfStockCount || 0, icon: Zap, color: 'dark:from-[#4c0519] dark:to-[#831843] dark:border-rose-500/20', lightColor: 'bg-rose-100 border-rose-200', iconColor: 'text-rose-600 dark:text-rose-400', trend: 2 }
+                ].map((stat, i) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.1 }}
+                        className={`relative p-4 sm:p-6 rounded-[28px] border overflow-hidden group hover:shadow-2xl transition-all duration-500 bg-gradient-to-br ${stat.color} ${stat.lightColor}`}
+                    >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 dark:bg-white/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-700 pointer-events-none" />
+                        <div className="relative flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/50 mb-1 truncate sm:hidden">{stat.mobileLabel}</p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/50 mb-1 truncate hidden sm:block">{stat.label}</p>
+                                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white truncate">{stat.value.toLocaleString()}</h3>
+                                {stat.trend && (
+                                    <div className={`flex items-center gap-1 text-[10px] font-black mt-1 ${stat.trend > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                        {stat.trend > 0 ? <TrendingUp size={10} /> : <Activity size={10} />}
+                                        <span>{Math.abs(stat.trend)}%</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`flex-shrink-0 p-3 sm:p-4 bg-white shadow-sm dark:bg-black/20 rounded-2xl border dark:border-white/10 dark:backdrop-blur-xl dark:shadow-inner ${stat.iconColor}`}>
+                                <stat.icon size={24} />
+                            </div>
                         </div>
-                        <div className="p-3 bg-blue-500/20 rounded-xl">
-                            <Boxes className="text-blue-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard gradient="pink" delay={0.2}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Pending Auth</p>
-                            <h3 className="text-2xl font-black text-[var(--text-primary)]">{pendingVerifications.length}</h3>
-                        </div>
-                        <div className="p-3 bg-pink-500/20 rounded-xl">
-                            <ShieldCheck className="text-pink-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard gradient="green" delay={0.3}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Low Stock Alert</p>
-                            <h3 className="text-2xl font-black text-amber-400">{stats.lowStockProducts}</h3>
-                        </div>
-                        <div className="p-3 bg-amber-500/20 rounded-xl">
-                            <AlertTriangle className="text-amber-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
-
-                <NeuralCard className="bg-rose-500/5 border-rose-500/20" delay={0.4}>
-                    <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Depleted Units</p>
-                            <h3 className="text-2xl font-black text-rose-400">{stats.outOfStockCount || 0}</h3>
-                        </div>
-                        <div className="p-3 bg-rose-500/20 rounded-xl">
-                            <Zap className="text-rose-400" size={20} />
-                        </div>
-                    </div>
-                </NeuralCard>
+                    </motion.div>
+                ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -215,7 +204,43 @@ const ManagerDashboard = () => {
                             </div>
                             <NeuralBadge variant="pending">{pendingVerifications.length} Awaiting</NeuralBadge>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="md:hidden space-y-3 p-4">
+                            {pendingVerifications.map((o) => (
+                                <div key={o._id} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest">ID: {o._id.slice(-8)}</p>
+                                            <p className="font-bold text-white tracking-widest">₹{o.totalAmount.toLocaleString()}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <NeuralButton
+                                                variant="secondary"
+                                                className="w-10 h-10 border-rose-500/30 text-rose-400"
+                                                onClick={() => verifyPayment(o._id, 'reject')}
+                                            >
+                                                <XCircle size={14} />
+                                            </NeuralButton>
+                                            <NeuralButton
+                                                variant="primary"
+                                                className="w-10 h-10 bg-emerald-500 text-black hover:bg-emerald-400"
+                                                onClick={() => verifyPayment(o._id, 'approve')}
+                                            >
+                                                <CheckCircle size={14} />
+                                            </NeuralButton>
+                                        </div>
+                                    </div>
+                                    <div className="pt-2 border-t border-white/5">
+                                        <p className="text-[9px] font-extrabold text-white/20 uppercase tracking-widest mb-1">UTR Protocol</p>
+                                        <p className="text-xs font-mono text-brand-blue/60">{o.paymentUTR}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {pendingVerifications.length === 0 && (
+                                <p className="text-center py-8 text-[var(--text-secondary)] font-bold uppercase tracking-widest text-[10px]">All protocols cleared</p>
+                            )}
+                        </div>
+
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="neural-table">
                                 <thead>
                                     <tr>
@@ -284,8 +309,8 @@ const ManagerDashboard = () => {
                                     <Camera size={18} />
                                 </button>
                             </div>
-                            <div className="flex gap-4">
-                                <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row items-end gap-4">
+                                <div className="w-full sm:flex-1">
                                     <NeuralInput
                                         label="Authorization OTP"
                                         placeholder="6-digit protocol..."
@@ -296,7 +321,7 @@ const ManagerDashboard = () => {
                                 </div>
                                 <NeuralButton
                                     onClick={handleCompleteDelivery}
-                                    className="h-[46px] bg-emerald-500 text-black hover:bg-emerald-400"
+                                    className="w-full sm:w-auto h-[46px] bg-emerald-500 text-black hover:bg-emerald-400 whitespace-nowrap"
                                 >
                                     Seal Handover
                                 </NeuralButton>
@@ -388,6 +413,7 @@ const ManagerDashboard = () => {
 };
 
 const CommunicationsHub = () => {
+    const { addToast } = useToast();
     const [users, setUsers] = useState([]);
     const [targetEmail, setTargetEmail] = useState('');
     const [title, setTitle] = useState('');
@@ -399,11 +425,10 @@ const CommunicationsHub = () => {
     const fetchAdminMessages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/messages', {
+            const { data } = await axios.get('/api/messages', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAdminMessages(data);
-            console.log("Manager Dashboard Msgs RAW:", data);
         } catch (error) { console.error("Msg Error", error); }
     };
 
@@ -411,10 +436,9 @@ const CommunicationsHub = () => {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:6700/api/dashboard/users-list', {
+                const { data } = await axios.get('/api/dashboard/users-list', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Allow messaging to Managers as well (so Admins can message Managers)
                 setUsers(data.filter(u => u.role === 'user' || u.role === 'admin' || u.role === 'manager'));
             } catch (error) { console.error(error); }
         };
@@ -426,18 +450,21 @@ const CommunicationsHub = () => {
 
     const sendMessage = async (e) => {
         e.preventDefault();
-        if (!targetEmail || !title || !message) return alert("Fill all fields");
+        if (!targetEmail || !title || !message) {
+            addToast("Fill all directive parameters", "warning");
+            return;
+        }
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:6700/api/dashboard/send-message',
+            await axios.post('/api/dashboard/send-message',
                 { toEmail: targetEmail, title, message },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            alert("✨ Message sent successfully!");
+            addToast("✨ Message sent successfully!", "success");
             setTitle(''); setMessage('');
         } catch (error) {
-            alert(error.response?.data?.message || "Failed to send");
+            addToast(error.response?.data?.message || "Failed to send", "error");
         }
         setLoading(false);
     };

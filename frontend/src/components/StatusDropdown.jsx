@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 const StatusDropdown = ({ currentStatus, onUpdate }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, right: 0 });
+    const buttonRef = useRef(null);
     const dropdownRef = useRef(null);
 
     const statuses = [
@@ -20,17 +23,47 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
         setIsOpen(false);
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
+    const updatePosition = () => {
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            // Calculate left position (default to aligned with button left)
+            let left = rect.left;
+            // distinct mobile check or bounds check: if dropdown (assume ~250px) would overflow right, align to right
+            if (left + 260 > window.innerWidth) {
+                left = window.innerWidth - 270; // 260px width + 10px padding
             }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+            if (left < 10) left = 10; // min left margin
+
+            setCoords({
+                top: rect.bottom + 8,
+                left: left,
+            });
+        }
+    };
+
+    const toggleOpen = () => {
+        if (!isOpen) {
+            updatePosition();
+            setIsOpen(true);
+        } else {
+            setIsOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            const handleClose = () => setIsOpen(false);
+            window.addEventListener('resize', handleClose);
+            // Removed scroll listener to prevent immediate closing on mobile touch
+
+            return () => {
+                window.removeEventListener('resize', handleClose);
+            };
+        }
+    }, [isOpen]);
+
+    // Remove the complex window event listeners for click outside
+    // We will use a backdrop approach instead
 
     const getStatusStyle = (status) => {
         switch (status) {
@@ -44,9 +77,13 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
     };
 
     return (
-        <div className="relative inline-block" ref={dropdownRef}>
+        <>
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                ref={buttonRef}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOpen();
+                }}
                 className={twMerge(
                     "neural-badge cursor-pointer pr-8 relative transition-all active:scale-95 min-w-[140px] justify-start",
                     getStatusStyle(currentStatus)
@@ -57,23 +94,42 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
                 <ChevronDown className={twMerge("absolute right-2 top-1/2 -translate-y-1/2 transition-transform", isOpen ? "rotate-180" : "")} size={12} />
             </button>
 
-            <AnimatePresence>
-                {isOpen && (
+            {isOpen && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-start justify-start">
+                    {/* Invisible Backdrop to handle closing */}
+                    <div
+                        className="fixed inset-0 bg-black/10 backdrop-blur-[1px]"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOpen(false);
+                        }}
+                    />
+
+                    {/* The Dropdown Menu */}
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 4, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 top-full mt-2 w-56 bg-[#0a0a0a]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden p-1.5"
+                        ref={dropdownRef}
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        style={{
+                            position: 'fixed',
+                            top: coords.top,
+                            left: coords.left,
+                            width: '250px'
+                        }}
+                        className="relative bg-[#0a0a0a] border border-[var(--card-border)] rounded-2xl shadow-2xl overflow-hidden p-1.5 z-50"
                     >
                         {statuses.map(status => (
                             <button
                                 key={status}
-                                onClick={() => handleSelect(status)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelect(status);
+                                }}
                                 className={twMerge(
-                                    "w-full text-left px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-between group",
+                                    "w-full text-left px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-between group whitespace-nowrap",
                                     status === currentStatus
-                                        ? "bg-white/10 text-white"
-                                        : "text-white/40 hover:bg-white/5 hover:text-white"
+                                        ? "bg-brand-blue/10 text-[var(--text-primary)]"
+                                        : "text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]"
                                 )}
                             >
                                 {status}
@@ -81,9 +137,10 @@ const StatusDropdown = ({ currentStatus, onUpdate }) => {
                             </button>
                         ))}
                     </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                </div>,
+                document.body
+            )}
+        </>
     );
 };
 

@@ -158,17 +158,19 @@ const SalesMessages = () => {
                 selectedUserId={selectedContact?._id}
             />
 
-            <EcoChat
-                currentUser={user}
-                contacts={salesUsers}
-                messages={filteredMessages}
-                onSendMessage={handleSendMessage}
-                onSelectContact={handleContactSelect}
-                selectedContact={selectedContact}
-                loading={loading}
-                singleContactMode={false} // Sidebar enabled for Admin
-                chatTitle="Sales Grid"
-            />
+            <div className="h-[calc(100dvh-140px)] lg:h-[calc(100vh-220px)] lg:min-h-[600px] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-2xl shadow-black/50">
+                <EcoChat
+                    currentUser={user}
+                    contacts={salesUsers}
+                    messages={filteredMessages}
+                    onSendMessage={handleSendMessage}
+                    onSelectContact={handleContactSelect}
+                    selectedContact={selectedContact}
+                    loading={loading}
+                    singleContactMode={false} // Sidebar enabled for Admin
+                    chatTitle="Sales Grid"
+                />
+            </div>
         </div>
     );
 };

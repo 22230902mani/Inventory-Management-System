@@ -13,7 +13,10 @@ const orderSchema = new mongoose.Schema({
     paymentVerified: { type: Boolean, default: false },
     status: { type: String, default: 'Pending Verification', enum: ['Pending Verification', 'Processing', 'Shipped', 'Received', 'Cancelled'] },
     deliveryOtp: { type: String }, // Hashed OTP
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    payoutAmount: { type: Number },
+    payoutStatus: { type: String, enum: ['Pending', 'Eligible', 'Paid'], default: 'Pending' },
+    salesTeam: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
 module.exports = mongoose.model('Order', orderSchema);

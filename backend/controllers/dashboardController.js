@@ -15,6 +15,12 @@ exports.getDashboardStats = async (req, res) => {
         const orders = await Order.find({ status: { $ne: 'Cancelled' } });
         const totalRevenue = orders.reduce((acc, order) => acc + order.totalAmount, 0);
 
+        // Calculated total payouts
+        const paidOrders = await Order.find({ payoutStatus: 'Paid' });
+        const totalPayouts = paidOrders.reduce((acc, order) => acc + (order.payoutAmount || 0), 0);
+
+        const netBalance = totalRevenue - totalPayouts;
+
         // Recent orders
         const recentOrders = await Order.find({}).sort({ createdAt: -1 }).limit(5).populate('user', 'name');
 
@@ -29,6 +35,8 @@ exports.getDashboardStats = async (req, res) => {
             inStockCount,
             totalOrders,
             totalRevenue,
+            totalPayouts,
+            netBalance,
             recentOrders
         });
     } catch (error) {

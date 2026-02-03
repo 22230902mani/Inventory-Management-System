@@ -6,7 +6,9 @@ const messageSchema = new mongoose.Schema({
     content: { type: String, required: true },
     relatedProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     attachment: { type: String }, // Path to uploaded file
-    isRead: { type: Boolean, default: false }
+    isRead: { type: Boolean, default: false },
+    status: { type: String, enum: ['sent', 'delivered', 'seen'], default: 'sent' }, // WhatsApp-style status
+    readAt: { type: Date } // When the message was seen
 }, { timestamps: true });
 
 module.exports = mongoose.model('Message', messageSchema);

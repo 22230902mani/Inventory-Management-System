@@ -1,0 +1,6 @@
+/* Camera Protocol: Mobile UI Optimization */
+@media (max-width: 640px) {
+    body.camera-active .chatbot-container {
+        display: none !important;
+    }
+}

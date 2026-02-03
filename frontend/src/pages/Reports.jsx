@@ -108,7 +108,9 @@ const Reports = () => {
                                 <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
                                 <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val / 1000}k`} />
                                 <Tooltip
-                                    contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-primary)' }}
+                                    contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: '12px' }}
+                                    itemStyle={{ color: 'var(--tooltip-text)', fontWeight: 'bold' }}
+                                    labelStyle={{ color: 'var(--tooltip-text)', marginBottom: '4px' }}
                                 />
                                 <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
                             </AreaChart>
@@ -138,7 +140,9 @@ const Reports = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: '12px', color: 'var(--text-primary)' }}
+                                    contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', fontSize: '12px' }}
+                                    itemStyle={{ color: 'var(--tooltip-text)', fontWeight: 'bold' }}
+                                    labelStyle={{ color: 'var(--tooltip-text)', marginBottom: '4px' }}
                                 />
                                 <Legend verticalAlign="bottom" iconType="circle" />
                             </PieChart>

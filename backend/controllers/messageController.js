@@ -6,10 +6,11 @@ exports.sendMessage = async (req, res) => {
         console.log(`[sendMessage] Sender: ${req.user._id} To: ${receiverId} Content: ${content}`);
         const message = await Message.create({
             sender: req.user._id,
-            receiver: receiverId, // If null, maybe handled as "to Admin"
+            receiver: receiverId,
             content,
             relatedProduct: relatedProductId,
-            attachment
+            attachment,
+            status: 'delivered' // Message is delivered once created
         });
         res.status(201).json(message);
     } catch (error) {
@@ -22,7 +23,6 @@ exports.getMessages = async (req, res) => {
     try {
         let query;
         if (req.user.role === 'admin') {
-            // Admin sees their own messages and messages to 'null' (system/admin)
             query = { $or: [{ sender: req.user._id }, { receiver: req.user._id }, { receiver: null }] };
         } else {
             query = { $or: [{ sender: req.user._id }, { receiver: req.user._id }] };
@@ -32,20 +32,35 @@ exports.getMessages = async (req, res) => {
             .populate('sender', 'name email role')
             .populate('receiver', 'name email')
             .populate('relatedProduct', 'name')
-            .sort({ createdAt: 1 }); // Oldest first for chat history
+            .sort({ createdAt: 1 });
+
+        // Auto-mark messages as delivered when receiver fetches them
+        const messagesToUpdate = messages.filter(m =>
+            m.receiver &&
+            String(m.receiver._id) === String(req.user._id) &&
+            m.status === 'sent'
+        );
+
+        for (let msg of messagesToUpdate) {
+            msg.status = 'delivered';
+            await msg.save();
+        }
+
         res.json(messages);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-const User = require('../models/User'); // Import User model
+const User = require('../models/User');
 
 exports.markAsRead = async (req, res) => {
     try {
         const message = await Message.findById(req.params.id);
-        if (message.receiver.toString() === req.user._id.toString()) {
+        if (message.receiver && message.receiver.toString() === req.user._id.toString()) {
             message.isRead = true;
+            message.status = 'seen'; // Blue tick
+            message.readAt = new Date();
             await message.save();
         }
         res.json(message);

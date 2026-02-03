@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
     quantity: { type: Number, required: true },
     barcode: { type: String, unique: true, sparse: true }, // Barcode field
     supplier: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' },
-    lowStockThreshold: { type: Number, default: 10 },
+    lowStockThreshold: { type: Number, default: 20 },
     description: { type: String },
     companyName: { type: String, required: true },
     images: { type: [String], validate: [val => val.length >= 3, 'Must have at least 3 images'] },
