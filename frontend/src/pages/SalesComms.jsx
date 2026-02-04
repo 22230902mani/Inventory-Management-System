@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { useAuth } from '../context/AuthContext';
 import EcoChat from '../components/chat/EcoChat';
 import { Leaf } from 'lucide-react';
@@ -15,7 +16,7 @@ const SalesComms = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             // Retrieve my messages. The backend filters for relevant messages.
-            const res = await axios.get('http://localhost:6700/api/messages', config);
+            const res = await axios.get(`${config.API_BASE_URL}/api/messages`, config);
             setMessages(res.data);
             setLoading(false);
         } catch (error) {
@@ -42,7 +43,7 @@ const SalesComms = () => {
                 const formData = new FormData();
                 formData.append('images', file);
 
-                const uploadRes = await axios.post('http://localhost:6700/api/upload', formData, {
+                const uploadRes = await axios.post(`${config.API_BASE_URL}/api/upload`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -52,7 +53,7 @@ const SalesComms = () => {
             }
 
             // 2. Send message to Admin (receiverId: null represents Admin)
-            await axios.post('http://localhost:6700/api/messages',
+            await axios.post(`${config.API_BASE_URL}/api/messages`,
                 {
                     receiverId: null,
                     content: content || (file ? "Sent an attachment" : ""),

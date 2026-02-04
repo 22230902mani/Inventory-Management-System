@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { useAuth } from '../context/AuthContext';
 import EcoChat from '../components/chat/EcoChat';
 import { Leaf } from 'lucide-react';
@@ -20,7 +21,7 @@ const SalesMessages = () => {
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
             // 1. Fetch Users (User List) then filter for Sales
-            const usersRes = await axios.get(`http://localhost:6700/api/dashboard/users-list?t=${Date.now()}`, config);
+            const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list?t=${Date.now()}`, config);
 
             // Filter for 'sales' role
             const activeSales = usersRes.data.filter(u =>
@@ -29,7 +30,7 @@ const SalesMessages = () => {
 
             // 2. Fetch All My Messages (Admin View)
             // Using standard getMessages guarantees we see anything we sent or received
-            const msgsRes = await axios.get(`http://localhost:6700/api/messages?t=${Date.now()}`, config);
+            const msgsRes = await axios.get(`${config.API_BASE_URL}/api/messages?t=${Date.now()}`, config);
             const rawMessages = msgsRes.data;
 
             setSalesUsers(activeSales);
@@ -94,7 +95,7 @@ const SalesMessages = () => {
                 const formData = new FormData();
                 formData.append('images', file); // Backend expects 'images' array
 
-                const uploadRes = await axios.post('http://localhost:6700/api/upload', formData, {
+                const uploadRes = await axios.post(`${config.API_BASE_URL}/api/upload`, formData, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -119,7 +120,7 @@ const SalesMessages = () => {
             // Immediately show in chat
             setAllMessages(prev => [...prev, newMessage]);
 
-            await axios.post('http://localhost:6700/api/messages',
+            await axios.post(`${config.API_BASE_URL}/api/messages`,
                 {
                     receiverId: selectedContact._id,
                     content: content || (file ? "Sent an attachment" : ""),

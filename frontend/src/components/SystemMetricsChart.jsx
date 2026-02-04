@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import axios from 'axios';
 import NeuralCard from './ui/NeuralCard';
 import { Activity } from 'lucide-react';
+import config from '../config';
 
 const SystemMetricsChart = ({ stats }) => {
     const [userCounts, setUserCounts] = useState({ admins: 0, managers: 0, users: 0, total: 0 });
@@ -15,7 +16,7 @@ const SystemMetricsChart = ({ stats }) => {
                 const config = { headers: { Authorization: `Bearer ${token}` } };
 
                 // Fetch Users to count roles
-                const usersRes = await axios.get('http://localhost:6700/api/dashboard/users-list', config);
+                const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list`, config);
                 const users = usersRes.data;
                 const counts = users.reduce((acc, user) => {
                     const role = (user.role || 'user').toLowerCase();
@@ -38,7 +39,7 @@ const SystemMetricsChart = ({ stats }) => {
                 // Let's try to fetch full list or maybe dashboard stats has it hidden?
                 // Safest is to calculate if we can, or just display 0 if unavailable.
                 // Assuming /api/products returns all products
-                const prodRes = await axios.get('http://localhost:6700/api/inventory', config); // Adjust endpoint if needed
+                const prodRes = await axios.get(`${config.API_BASE_URL}/api/inventory`, config); // Adjust endpoint if needed
                 if (Array.isArray(prodRes.data)) {
                     const stock = prodRes.data.reduce((sum, p) => sum + (p.quantity || 0), 0);
                     setTotalStock(stock);

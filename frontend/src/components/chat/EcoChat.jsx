@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Leaf, Phone, Video, Mic, Paperclip, CheckCheck, Check, Smile, MoreVertical, Search, ArrowLeft, Trash2, StopCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import config from '../../config';
 
 const EcoChat = ({
     currentUser,
@@ -153,7 +154,7 @@ const EcoChat = ({
             for (const msg of unreadMessages) {
                 try {
                     await axios.put(
-                        `http://localhost:6700/api/messages/${msg._id}/read`,
+                        `${config.API_BASE_URL}/api/messages/${msg._id}/read`,
                         {},
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -369,18 +370,18 @@ const EcoChat = ({
                                                         <div className="mb-2 mt-1 rounded-md overflow-hidden bg-black/20">
                                                             {msg.attachment.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                                                                 <img
-                                                                    src={`http://localhost:6700${msg.attachment}`}
+                                                                    src={`${config.API_BASE_URL}${msg.attachment}`}
                                                                     alt="attachment"
                                                                     className="w-full h-auto object-cover max-h-[300px]"
                                                                     onLoad={handleImageLoad}
                                                                 />
                                                             ) : msg.attachment.match(/\.(mp3|wav|webm|m4a|ogg)$/i) ? (
                                                                 <audio controls className="w-full h-10 filter invert brightness-150">
-                                                                    <source src={`http://localhost:6700${msg.attachment}`} type="audio/webm" />
+                                                                    <source src={`${config.API_BASE_URL}${msg.attachment}`} type="audio/webm" />
                                                                     Your browser does not support the audio element.
                                                                 </audio>
                                                             ) : (
-                                                                <a href={`http://localhost:6700${msg.attachment}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors">
+                                                                <a href={`${config.API_BASE_URL}${msg.attachment}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors">
                                                                     <div className="p-2 bg-neutral-800 rounded-lg">
                                                                         <Paperclip size={20} className="text-gray-300" />
                                                                     </div>
