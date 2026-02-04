@@ -58,9 +58,10 @@ const SalesDashboard = () => {
             const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory/my-proposals`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setProposals(data);
+            setProposals(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch proposals", error);
+            setProposals([]);
         }
     };
 
@@ -70,9 +71,10 @@ const SalesDashboard = () => {
             const { data } = await axios.get(`${config.API_BASE_URL}/api/orders/payouts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setPayouts(data);
+            setPayouts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch payouts", error);
+            setPayouts([]);
         }
     };
 
@@ -82,8 +84,11 @@ const SalesDashboard = () => {
             const { data } = await axios.get(`${config.API_BASE_URL}/api/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setMessages(data);
-        } catch (error) { console.error("Msg Error", error); }
+            setMessages(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Msg Error", error);
+            setMessages([]);
+        }
     };
 
     useEffect(() => {
