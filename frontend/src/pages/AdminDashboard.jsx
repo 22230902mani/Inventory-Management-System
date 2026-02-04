@@ -23,7 +23,8 @@ import {
     CheckCircle,
     Minus,
     TrendingUp,
-    Clock
+    Clock,
+    Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Scanner from '../components/Scanner';
@@ -111,6 +112,19 @@ const AdminDashboard = () => {
             setPendingProducts(pendingProducts.filter(p => p._id !== id));
         } catch (error) {
             addToast("Rejection Failed", "error");
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${config.API_BASE_URL}/api/inventory/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            addToast("Protocol Deleted.", "success");
+            setPendingProducts(pendingProducts.filter(p => p._id !== id));
+        } catch (error) {
+            addToast("Deletion Failed", "error");
         }
     };
 
@@ -222,7 +236,7 @@ const AdminDashboard = () => {
                                 {p.images && p.images.length > 0 && (
                                     <div className="flex gap-2 mb-2">
                                         {p.images.slice(0, 3).map((img, idx) => (
-                                            <img key={idx} src={`${config.API_BASE_URL}${img}`} className="w-14 h-14 object-cover rounded-xl border border-[var(--card-border)]" alt="evidence" />
+                                            <img key={idx} src={`${config.API_BASE_URL}${img.replace(/\\/g, '/')}`} className="w-14 h-14 object-cover rounded-xl border border-[var(--card-border)]" alt="evidence" />
                                         ))}
                                     </div>
                                 )}
@@ -249,11 +263,18 @@ const AdminDashboard = () => {
                                             <button onClick={() => handleApprove(p._id)} className="h-10 px-6 bg-white text-black hover:bg-white/90 font-black text-[10px] uppercase transition-all rounded-xl">AUTHORIZE</button>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-end">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">PROTOCOL</p>
-                                            <p className={`text-[10px] font-black uppercase tracking-widest ${p.status === 'active' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                                {p.status === 'active' ? 'ACTIVE' : 'TERMINATED'}
-                                            </p>
+                                        <div className="flex gap-4 items-center justify-end w-full">
+                                            <div className="flex flex-col items-end">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">PROTOCOL</p>
+                                                <p className={`text-[10px] font-black uppercase tracking-widest ${p.status === 'active' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                    {p.status === 'active' ? 'ACTIVE' : 'TERMINATED'}
+                                                </p>
+                                            </div>
+                                            {p.status === 'rejected' && (
+                                                <button onClick={() => handleDelete(p._id)} className="p-2 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors" title="Delete from Manifest">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
