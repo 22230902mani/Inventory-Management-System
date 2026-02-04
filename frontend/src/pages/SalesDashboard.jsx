@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import config from '../config';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -54,7 +54,7 @@ const SalesDashboard = () => {
     const fetchProposals = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/inventory/my-proposals', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory/my-proposals`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProposals(data);
@@ -66,7 +66,7 @@ const SalesDashboard = () => {
     const fetchPayouts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/orders/payouts', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/orders/payouts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPayouts(data);
@@ -78,7 +78,7 @@ const SalesDashboard = () => {
     const fetchMessages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/messages', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessages(data);
@@ -145,7 +145,7 @@ const SalesDashboard = () => {
         if (!newMessage.trim()) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:6700/api/messages', { content: newMessage, receiverId: null }, {
+            await axios.post(`${config.API_BASE_URL}/api/messages`, { content: newMessage, receiverId: null }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNewMessage('');
@@ -176,7 +176,7 @@ const SalesDashboard = () => {
                 for (let i = 0; i < images.length; i++) {
                     uploadData.append('images', images[i]);
                 }
-                const uploadRes = await axios.post('http://localhost:6700/api/upload', uploadData, {
+                const uploadRes = await axios.post(`${config.API_BASE_URL}/api/upload`, uploadData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                         Authorization: `Bearer ${token}`
@@ -197,7 +197,7 @@ const SalesDashboard = () => {
                 delete payload.barcode;
             }
 
-            await axios.post('http://localhost:6700/api/inventory', payload, {
+            await axios.post(`${config.API_BASE_URL}/api/inventory`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setFormData({ name: '', category: '', price: '', quantity: '', sku: '', barcode: '', description: '', companyName: '' });

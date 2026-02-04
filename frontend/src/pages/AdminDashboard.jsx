@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import config from '../config';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     PieChart, Pie, Cell, BarChart, Bar as RechartsBar, Legend
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:6700/api/dashboard/stats', {
+                const { data } = await axios.get(`${config.API_BASE_URL}/api/dashboard/stats`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(data);
@@ -72,7 +72,7 @@ const AdminDashboard = () => {
         const fetchPending = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:6700/api/inventory/pending', {
+                const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory/pending`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setPendingProducts(data);
@@ -90,7 +90,7 @@ const AdminDashboard = () => {
     const handleApprove = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:6700/api/inventory/${id}/approve`, {}, {
+            await axios.put(`${config.API_BASE_URL}/api/inventory/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast("Asset Authorized & Deployed to Main Grid.", "success");
@@ -103,7 +103,7 @@ const AdminDashboard = () => {
     const handleReject = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:6700/api/inventory/${id}/reject`, {}, {
+            await axios.put(`${config.API_BASE_URL}/api/inventory/${id}/reject`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast("Protocol Violation: Asset Rejected.", "warning");
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
         if (!scanCode) return;
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get(`http://localhost:6700/api/inventory/barcode/${scanCode}`, {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory/barcode/${scanCode}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct(data);
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             const newQty = scannedProduct.quantity + delta;
-            await axios.put(`http://localhost:6700/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
+            await axios.put(`${config.API_BASE_URL}/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct({ ...scannedProduct, quantity: newQty });
@@ -221,7 +221,7 @@ const AdminDashboard = () => {
                                 {p.images && p.images.length > 0 && (
                                     <div className="flex gap-2 mb-2">
                                         {p.images.slice(0, 3).map((img, idx) => (
-                                            <img key={idx} src={`http://localhost:6700${img}`} className="w-14 h-14 object-cover rounded-xl border border-[var(--card-border)]" alt="evidence" />
+                                            <img key={idx} src={`${config.API_BASE_URL}${img}`} className="w-14 h-14 object-cover rounded-xl border border-[var(--card-border)]" alt="evidence" />
                                         ))}
                                     </div>
                                 )}

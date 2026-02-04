@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import config from '../config';
 import {
     Package,
     Clock,
@@ -51,7 +51,7 @@ const ManagerDashboard = () => {
     const fetchOrders = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('/api/orders', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(data);
@@ -63,7 +63,7 @@ const ManagerDashboard = () => {
     const verifyPayment = async (orderId, action) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/orders/verify-payment', { orderId, action }, {
+            await axios.post(`${config.API_BASE_URL}/api/orders/verify-payment`, { orderId, action }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast(action === 'approve' ? 'Payment Verified. OTP sent to user.' : 'Payment Rejected. Order Cancelled.', action === 'approve' ? 'success' : 'warning');
@@ -77,7 +77,7 @@ const ManagerDashboard = () => {
         if (e) e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get(`/api/inventory/barcode/${scanCode}`, {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory/barcode/${scanCode}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct(data);
@@ -98,7 +98,7 @@ const ManagerDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             const newQty = scannedProduct.quantity + delta;
-            await axios.put(`/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
+            await axios.put(`${config.API_BASE_URL}/api/inventory/${scannedProduct._id}`, { quantity: newQty }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setScannedProduct({ ...scannedProduct, quantity: newQty });
@@ -116,7 +116,7 @@ const ManagerDashboard = () => {
         if (!verifyOrderId || !verifyOtp) return alert('Enter ID and OTP');
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`/api/orders/${verifyOrderId}/verify-delivery`, { otp: verifyOtp }, {
+            await axios.post(`${config.API_BASE_URL}/api/orders/${verifyOrderId}/verify-delivery`, { otp: verifyOtp }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast('OTP Match! Order Marked as Received.', 'success');
@@ -132,7 +132,7 @@ const ManagerDashboard = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('/api/dashboard/stats', {
+                const { data } = await axios.get(`${config.API_BASE_URL}/api/dashboard/stats`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats({
@@ -425,7 +425,7 @@ const CommunicationsHub = () => {
     const fetchAdminMessages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('/api/messages', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAdminMessages(data);
@@ -436,7 +436,7 @@ const CommunicationsHub = () => {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('/api/dashboard/users-list', {
+                const { data } = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setUsers(data.filter(u => u.role === 'user' || u.role === 'admin' || u.role === 'manager'));
@@ -457,7 +457,7 @@ const CommunicationsHub = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/dashboard/send-message',
+            await axios.post(`${config.API_BASE_URL}/api/dashboard/send-message`,
                 { toEmail: targetEmail, title, message },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

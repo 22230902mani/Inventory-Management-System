@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import config from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Bot,
@@ -43,7 +43,7 @@ const Chatbot = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.post('http://localhost:6700/api/chatbot',
+            const { data } = await axios.post(`${config.API_BASE_URL}/api/chatbot`,
                 { query: userMsg.content },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
