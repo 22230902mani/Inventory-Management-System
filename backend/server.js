@@ -20,6 +20,11 @@ mongoose.connect(process.env.MONGO_URI, { family: 4 })
         process.exit(1); // Exit process on failure so nodemon restarts
     });
 
+// Health Check Route
+app.get('/', (req, res) => {
+    res.send('Inventory Management Backend is Live 🚀');
+});
+
 // Routes Placeholders
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/inventory', require('./routes/inventoryRoutes'));
