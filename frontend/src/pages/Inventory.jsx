@@ -93,7 +93,7 @@ const Inventory = () => {
             const totalAmount = selectedProduct.price;
             const items = [{ product: selectedProduct._id, quantity: 1, priceAtPurchase: selectedProduct.price }];
 
-            await axios.post('/api/orders', { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`${config.API_BASE_URL}/api/orders`, { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
             setShowOrderModal(false);
             addToast("Order Placed Successfully!", 'success', 5000);
             fetchProducts();

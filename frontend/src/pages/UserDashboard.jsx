@@ -22,6 +22,7 @@ import NeuralBadge from '../components/ui/NeuralBadge';
 import NeuralButton from '../components/ui/NeuralButton';
 import NeuralInput from '../components/ui/NeuralInput';
 import NeuralNotifications from '../components/NeuralNotifications';
+import config from '../config';
 import { useToast } from '../context/ToastContext';
 
 const UserDashboard = () => {
@@ -46,9 +47,9 @@ const UserDashboard = () => {
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const pRes = await axios.get('/api/inventory', { headers: { Authorization: `Bearer ${token}` } });
+            const pRes = await axios.get(`${config.API_BASE_URL}/api/inventory`, { headers: { Authorization: `Bearer ${token}` } });
             setProducts(pRes.data);
-            const oRes = await axios.get('/api/orders/my-orders', { headers: { Authorization: `Bearer ${token}` } });
+            const oRes = await axios.get(`${config.API_BASE_URL}/api/orders/my-orders`, { headers: { Authorization: `Bearer ${token}` } });
             setMyOrders(oRes.data);
         } catch (e) { console.error(e); }
     };
@@ -95,7 +96,7 @@ const UserDashboard = () => {
                 totalAmount = selectedProduct.price * orderQty;
                 items = [{ product: selectedProduct._id, quantity: parseInt(orderQty), priceAtPurchase: selectedProduct.price }];
             }
-            await axios.post('/api/orders', { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`${config.API_BASE_URL}/api/orders`, { items, totalAmount, paymentUTR: utrNumber, shippingAddress: fullShippingAddress }, { headers: { Authorization: `Bearer ${token}` } });
             setShowOrderModal(false);
             if (isCartCheckout) setCart([]);
             addToast("Order Placed Successfully!", 'success', 5000);
