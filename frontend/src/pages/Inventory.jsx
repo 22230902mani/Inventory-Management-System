@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { useAuth } from '../context/AuthContext';
 import {
     Package,
@@ -108,7 +109,7 @@ const Inventory = () => {
     const fetchProducts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/inventory', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/inventory`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProducts(data);
@@ -129,11 +130,11 @@ const Inventory = () => {
         try {
             const token = localStorage.getItem('token');
             if (isEditing) {
-                await axios.put(`http://localhost:6700/api/inventory/${currentId}`, newItem, {
+                await axios.put(`${config.API_BASE_URL}/api/inventory/${currentId}`, newItem, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.post('http://localhost:6700/api/inventory', newItem, {
+                await axios.post(`${config.API_BASE_URL}/api/inventory`, newItem, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
@@ -156,7 +157,7 @@ const Inventory = () => {
         if (!window.confirm('Are you sure you want to delete this product?')) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:6700/api/inventory/${id}`, {
+            await axios.delete(`${config.API_BASE_URL}/api/inventory/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast('Asset decommissioned successfully', 'success', 3000);

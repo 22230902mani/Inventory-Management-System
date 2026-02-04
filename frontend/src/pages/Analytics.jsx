@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Users, Package, IndianRupee, BarChart3, PieChart, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart as RePieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import axios from 'axios';
+import config from '../config';
 
 const Analytics = () => {
     const [stats, setStats] = useState({
@@ -56,17 +57,17 @@ const Analytics = () => {
             const token = localStorage.getItem('token');
 
             // Fetch users count
-            const usersRes = await axios.get('http://localhost:6700/api/users', {
+            const usersRes = await axios.get(`${config.API_BASE_URL}/api/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             // Fetch inventory count
-            const inventoryRes = await axios.get('http://localhost:6700/api/inventory', {
+            const inventoryRes = await axios.get(`${config.API_BASE_URL}/api/inventory`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             // Fetch orders/sales count
-            const ordersRes = await axios.get('http://localhost:6700/api/orders', {
+            const ordersRes = await axios.get(`${config.API_BASE_URL}/api/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

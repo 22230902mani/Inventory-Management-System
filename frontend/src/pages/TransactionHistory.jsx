@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -48,7 +49,7 @@ const TransactionHistory = () => {
 
         setRefreshing(true);
         try {
-            const res = await axios.get('http://localhost:6700/api/transactions', {
+            const res = await axios.get(`${config.API_BASE_URL}/api/transactions`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             console.log('Fetched transactions:', res.data);
@@ -71,7 +72,7 @@ const TransactionHistory = () => {
         if (!selectedPayout) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:6700/api/orders/${selectedPayout._id}/payout`, {}, {
+            await axios.put(`${config.API_BASE_URL}/api/orders/${selectedPayout._id}/payout`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             addToast("Commission Transferred Successfully", "success");

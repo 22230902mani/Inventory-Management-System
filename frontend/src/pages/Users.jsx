@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 import {
     Users as UsersIcon,
     Trash2,
@@ -29,7 +30,7 @@ const Users = () => {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:6700/api/users', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/users`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUsers(data);
@@ -44,7 +45,7 @@ const Users = () => {
         if (!window.confirm('Terminate operative access permanently?')) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:6700/api/users/${id}`, {
+            await axios.delete(`${config.API_BASE_URL}/api/users/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchUsers();
@@ -56,7 +57,7 @@ const Users = () => {
     const verifyUser = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:6700/api/users/${id}/verify`, {}, {
+            await axios.put(`${config.API_BASE_URL}/api/users/${id}/verify`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchUsers();

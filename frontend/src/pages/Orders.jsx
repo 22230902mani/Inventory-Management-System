@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import config from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ShoppingCart,
@@ -31,8 +32,8 @@ const Orders = () => {
         const fetchOrders = async () => {
             const token = localStorage.getItem('token');
             const endpoint = userRole === 'user'
-                ? 'http://localhost:6700/api/orders/my-orders'
-                : 'http://localhost:6700/api/orders';
+                ? `${config.API_BASE_URL}/api/orders/my-orders`
+                : `${config.API_BASE_URL}/api/orders`;
 
             try {
                 const { data } = await axios.get(endpoint, {
@@ -52,7 +53,7 @@ const Orders = () => {
     const updateStatus = async (id, status) => {
         const token = localStorage.getItem('token');
         try {
-            await axios.put(`http://localhost:6700/api/orders/${id}/status`, { status }, {
+            await axios.put(`${config.API_BASE_URL}/api/orders/${id}/status`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(orders.map(o => o._id === id ? { ...o, status } : o));

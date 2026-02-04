@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import config from '../config';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +18,7 @@ const ForgotPassword = () => {
         setMsg('');
         setError('');
         try {
-            const { data } = await axios.post('http://localhost:6700/api/auth/forgot-password', { email });
+            const { data } = await axios.post(`${config.API_BASE_URL}/api/auth/forgot-password`, { email });
             setMsg(data.message);
             setTimeout(() => {
                 navigate('/verify-reset', { state: { email } });

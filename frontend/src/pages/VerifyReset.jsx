@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import config from '../config';
 import axios from 'axios';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,7 +19,7 @@ const VerifyReset = () => {
         setLoading(true);
         setError('');
         try {
-            await axios.post('http://localhost:6700/api/auth/verify-reset-code', { email, otp });
+            await axios.post(`${config.API_BASE_URL}/api/auth/verify-reset-code`, { email, otp });
             setMsg('Protocol Verified');
             setTimeout(() => {
                 navigate('/reset-password', { state: { email, otp } });
