@@ -17,7 +17,8 @@ const SystemMetricsChart = ({ stats }) => {
 
                 // Fetch Users to count roles
                 const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list`, config);
-                const users = usersRes.data;
+                const users = Array.isArray(usersRes.data) ? usersRes.data : [];
+
                 const counts = users.reduce((acc, user) => {
                     const role = (user.role || 'user').toLowerCase();
                     acc[role] = (acc[role] || 0) + 1;
