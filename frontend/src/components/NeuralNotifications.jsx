@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, LayoutPanelTop, Activity, Zap } from 'lucide-react';
+import config from '../config';
 
 const NeuralNotifications = () => {
     const [events, setEvents] = useState([]);
@@ -22,7 +23,7 @@ const NeuralNotifications = () => {
                 return;
             }
 
-            const response = await fetch('/api/notifications', {
+            const response = await fetch(`${config.API_BASE_URL}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

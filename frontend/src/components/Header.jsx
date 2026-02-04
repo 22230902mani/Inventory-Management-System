@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import NeuralNotifications from './NeuralNotifications';
 import axios from 'axios';
+import config from '../config';
 
 const Header = ({ user }) => {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
@@ -18,7 +19,7 @@ const Header = ({ user }) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const { data } = await axios.get('/api/notifications', {
+            const { data } = await axios.get(`${config.API_BASE_URL}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (Array.isArray(data)) {
@@ -54,7 +55,7 @@ const Header = ({ user }) => {
     const markAllRead = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put('/api/notifications/read', {}, {
+            await axios.put(`${config.API_BASE_URL}/api/notifications/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUnreadCount(0);
