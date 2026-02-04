@@ -144,15 +144,7 @@ const Header = ({ user }) => {
                     {/* Right Section: Actions & Profile */}
                     <div className="flex items-center gap-2 sm:gap-6">
                         <div className="flex items-center gap-2">
-                            {/* Desktop Search Toggle (Hidden on XL where date is shown) */}
-                            <div className="hidden lg:flex xl:hidden relative group w-48">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={14} />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    className="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl py-2 pl-10 pr-4 text-[10px] font-bold text-[var(--text-primary)] focus:outline-none"
-                                />
-                            </div>
+
 
                             <button
                                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
