@@ -14,13 +14,14 @@ const SalesComms = () => {
     const fetchMessages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
             // Retrieve my messages. The backend filters for relevant messages.
-            const res = await axios.get(`${config.API_BASE_URL}/api/messages`, config);
-            setMessages(res.data);
+            const res = await axios.get(`${config.API_BASE_URL}/api/messages`, axiosConfig);
+            setMessages(Array.isArray(res.data) ? res.data : []);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching messages", error);
+            setMessages([]);
             setLoading(false);
         }
     };
@@ -34,7 +35,7 @@ const SalesComms = () => {
     const handleSendMessage = async (content, file) => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             let attachmentPath = null;
 
@@ -59,7 +60,7 @@ const SalesComms = () => {
                     content: content || (file ? "Sent an attachment" : ""),
                     attachment: attachmentPath
                 },
-                config
+                axiosConfig
             );
 
             // Refresh messages immediately to show updated status
