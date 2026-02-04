@@ -18,18 +18,18 @@ const ManagerMessages = () => {
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             // 1. Fetch Managers (Contacts)
-            const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list`, config);
+            const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list`, axiosConfig);
             // Robust case-insensitive check for managers
-            const activeManagers = usersRes.data.filter(u =>
+            const activeManagers = Array.isArray(usersRes.data) ? usersRes.data.filter(u =>
                 u.role && u.role.toLowerCase() === 'manager'
-            );
+            ) : [];
 
             // 2. Fetch All Manager Messages
-            const msgsRes = await axios.get(`${config.API_BASE_URL}/api/messages/managers`, config);
-            const rawMessages = msgsRes.data;
+            const msgsRes = await axios.get(`${config.API_BASE_URL}/api/messages/managers`, axiosConfig);
+            const rawMessages = Array.isArray(msgsRes.data) ? msgsRes.data : [];
 
             setManagers(activeManagers);
             setAllMessages(rawMessages);
@@ -87,11 +87,11 @@ const ManagerMessages = () => {
         if (!selectedContact) return;
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             await axios.post(`${config.API_BASE_URL}/api/messages`,
                 { receiverId: selectedContact._id, content },
-                config
+                axiosConfig
             );
 
             // Trigger immediate fetch
