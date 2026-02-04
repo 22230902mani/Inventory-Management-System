@@ -18,20 +18,20 @@ const SalesMessages = () => {
     const fetchData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             // 1. Fetch Users (User List) then filter for Sales
-            const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list?t=${Date.now()}`, config);
+            const usersRes = await axios.get(`${config.API_BASE_URL}/api/dashboard/users-list?t=${Date.now()}`, axiosConfig);
 
             // Filter for 'sales' role
-            const activeSales = usersRes.data.filter(u =>
+            const activeSales = Array.isArray(usersRes.data) ? usersRes.data.filter(u =>
                 u.role && u.role.toLowerCase() === 'sales'
-            );
+            ) : [];
 
             // 2. Fetch All My Messages (Admin View)
             // Using standard getMessages guarantees we see anything we sent or received
-            const msgsRes = await axios.get(`${config.API_BASE_URL}/api/messages?t=${Date.now()}`, config);
-            const rawMessages = msgsRes.data;
+            const msgsRes = await axios.get(`${config.API_BASE_URL}/api/messages?t=${Date.now()}`, axiosConfig);
+            const rawMessages = Array.isArray(msgsRes.data) ? msgsRes.data : [];
 
             setSalesUsers(activeSales);
             setAllMessages(rawMessages);
@@ -86,7 +86,7 @@ const SalesMessages = () => {
         if (!selectedContact) return;
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             let attachmentPath = null;
 
@@ -126,7 +126,7 @@ const SalesMessages = () => {
                     content: content || (file ? "Sent an attachment" : ""),
                     attachment: attachmentPath
                 },
-                config
+                axiosConfig
             );
 
             // Trigger fetch to sync real ID
