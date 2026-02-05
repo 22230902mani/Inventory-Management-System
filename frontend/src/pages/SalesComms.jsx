@@ -72,18 +72,34 @@ const SalesComms = () => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full overflow-hidden">
-            <EcoChat
-                currentUser={user}
-                contacts={[]} // No contacts needed for Single Mode
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                onSelectContact={() => { }}
-                selectedContact={null}
-                loading={loading}
-                singleContactMode={true}
-                chatTitle="Admin Uplink"
-            />
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] pb-20 lg:pb-6">
+            <div className="shrink-0 px-4 md:px-6 pt-4 space-y-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tighter text-[var(--text-primary)]">ADMIN HQ LINK</h1>
+                        <p className="text-[var(--text-secondary)] font-medium tracking-wide">Direct secure line to Administration.</p>
+                    </div>
+                    <div className="hidden md:block p-3 bg-emerald-500/10 rounded-full border border-emerald-500/20 animate-pulse">
+                        <Leaf className="text-emerald-500" size={24} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex-1 min-h-0 px-4 md:px-6 pt-4">
+                <div className="h-full w-full rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-2xl shadow-black/50">
+                    <EcoChat
+                        currentUser={user}
+                        contacts={[]} // Single mode
+                        messages={messages}
+                        onSendMessage={handleSendMessage}
+                        onSelectContact={() => { }}
+                        selectedContact={null}
+                        loading={loading}
+                        singleContactMode={true}
+                        chatTitle="Admin Uplink"
+                    />
+                </div>
+            </div>
         </div>
     );
 };

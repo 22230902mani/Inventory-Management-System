@@ -108,28 +108,38 @@ const EcoChat = ({
         }
     };
 
-    const scrollToBottom = (smooth = true) => {
+    const scrollToBottom = (smooth = true, force = false) => {
         const container = messagesContainerRef.current;
         if (container) {
-            container.scrollTo({
-                top: container.scrollHeight,
-                behavior: smooth ? 'smooth' : 'auto'
-            });
+            // Check if user is near bottom (within 100px)
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+            if (force || isNearBottom) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: smooth ? 'smooth' : 'auto'
+                });
+            }
         }
     };
 
-    // 1. Force scroll to bottom when changing contacts
-    useEffect(() => {
-        scrollToBottom(false);
-    }, [selectedContact]);
-
-    // 2. Smart auto-scroll for new messages
+    // 1. Force scroll to bottom when changing contacts or sending a message (detected by message count increase drastically or via explicit call)
+    // We'll use a specific effect for contact change:
     useEffect(() => {
         const container = messagesContainerRef.current;
         if (container) {
-            scrollToBottom();
+            // Force scroll on contact change
+            container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
         }
-    }, [messages, selectedContact]);
+    }, [selectedContact]);
+
+
+    // 2. Smart auto-scroll for new messages
+    useEffect(() => {
+        // If it's a new message sent by ME, force scroll (handled in handleSend, but good to have fallback)
+        // If it's incoming, check if we are near bottom
+        scrollToBottom(true, false);
+    }, [messages]);
 
     // 3. Auto-mark messages as read when displayed
     useEffect(() => {
@@ -175,7 +185,7 @@ const EcoChat = ({
         setInput('');
         setSelectedFile(null);
         // Always scroll to bottom when WE send a message
-        setTimeout(() => scrollToBottom(true), 50);
+        setTimeout(() => scrollToBottom(true, true), 50);
     };
 
     const handleFileSelect = (e) => {

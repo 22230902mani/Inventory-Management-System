@@ -138,39 +138,43 @@ const SalesMessages = () => {
     };
 
     return (
-        <div className="container mx-auto p-4 md:p-6 space-y-6">
-
-
-            <div className="flex justify-between items-center mb-2">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tighter text-[var(--text-primary)]">
-                        SALES COMMAND <span className="text-sm opacity-50 font-normal">({allMessages.length}/{filteredMessages.length})</span>
-                    </h1>
-                    <p className="text-[var(--text-secondary)] font-medium tracking-wide">Secure channel for Field Sales Operatives.</p>
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] pb-20 lg:pb-6">
+            {/* Header & Stories (Hidden on Mobile when Chat is Open) */}
+            <div className={`shrink-0 px-4 md:px-6 pt-4 space-y-4 ${selectedContact ? 'hidden md:block' : ''}`}>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tighter text-[var(--text-primary)]">
+                            SALES COMMAND <span className="text-sm opacity-50 font-normal">({allMessages.length}/{filteredMessages.length})</span>
+                        </h1>
+                        <p className="text-[var(--text-secondary)] font-medium tracking-wide">Secure channel for Field Sales Operatives.</p>
+                    </div>
+                    <div className="hidden md:block p-3 bg-orange-500/10 rounded-full border border-orange-500/20 animate-pulse">
+                        <Leaf className="text-orange-500" size={24} />
+                    </div>
                 </div>
-                <div className="hidden md:block p-3 bg-orange-500/10 rounded-full border border-orange-500/20 animate-pulse">
-                    <Leaf className="text-orange-500" size={24} />
-                </div>
+
+                <ChatStories
+                    users={salesUsers}
+                    onSelect={handleContactSelect}
+                    selectedUserId={selectedContact?._id}
+                />
             </div>
 
-            <ChatStories
-                users={salesUsers}
-                onSelect={handleContactSelect}
-                selectedUserId={selectedContact?._id}
-            />
-
-            <div className="h-[calc(100dvh-140px)] lg:h-[calc(100vh-220px)] lg:min-h-[600px] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-2xl shadow-black/50">
-                <EcoChat
-                    currentUser={user}
-                    contacts={salesUsers}
-                    messages={filteredMessages}
-                    onSendMessage={handleSendMessage}
-                    onSelectContact={handleContactSelect}
-                    selectedContact={selectedContact}
-                    loading={loading}
-                    singleContactMode={false} // Sidebar enabled for Admin
-                    chatTitle="Sales Grid"
-                />
+            {/* Chat Area - Full width/height on Mobile when Selected */}
+            <div className={`flex-1 min-h-0 ${selectedContact ? 'px-0 pt-0' : 'px-4 pt-4'} md:px-6 md:pt-4 transition-all duration-300`}>
+                <div className={`h-full w-full overflow-hidden border shadow-2xl shadow-black/50 bg-[var(--card-bg)] ${selectedContact ? 'rounded-none border-x-0 border-t-0' : 'rounded-2xl border-[var(--card-border)]'}`}>
+                    <EcoChat
+                        currentUser={user}
+                        contacts={salesUsers}
+                        messages={filteredMessages}
+                        onSendMessage={handleSendMessage}
+                        onSelectContact={handleContactSelect}
+                        selectedContact={selectedContact}
+                        loading={loading}
+                        singleContactMode={false} // Sidebar enabled for Admin
+                        chatTitle="Sales Grid"
+                    />
+                </div>
             </div>
         </div>
     );

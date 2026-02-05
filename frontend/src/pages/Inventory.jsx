@@ -249,13 +249,13 @@ const Inventory = () => {
                                     <div className="flex gap-2 mb-4">
                                         <NeuralButton
                                             variant="secondary"
-                                            className="flex-1 h-11 border-brand-blue/20 text-brand-blue"
+                                            className="flex-1 h-11 border-brand-blue/20 text-brand-blue px-2 min-w-0"
                                             onClick={() => addToCart(p)}
                                         >
                                             <ShoppingCart size={16} className="mr-2" /> Queue
                                         </NeuralButton>
                                         <NeuralButton
-                                            className="flex-1 h-11 bg-brand-blue text-white"
+                                            className="flex-1 h-11 bg-brand-blue text-white px-2 min-w-0"
                                             onClick={() => openOrderModal(p)}
                                         >
                                             <Zap size={16} className="mr-2" /> Engage
@@ -269,14 +269,14 @@ const Inventory = () => {
                                             <>
                                                 <NeuralButton
                                                     variant="secondary"
-                                                    className="flex-1 h-10 border-white/10 hover:border-brand-blue"
+                                                    className="flex-1 h-10 border-white/10 hover:border-brand-blue px-2 min-w-0"
                                                     onClick={() => { setViewProduct(p); setShowDetailsModal(true); }}
                                                 >
                                                     <Eye size={14} className="mr-2" /> View
                                                 </NeuralButton>
                                                 <NeuralButton
                                                     variant="secondary"
-                                                    className="flex-1 h-10 border-white/10 hover:border-brand-blue"
+                                                    className="flex-1 h-10 border-white/10 hover:border-brand-blue px-2 min-w-0"
                                                     onClick={() => handleEditClick(p)}
                                                 >
                                                     <Edit3 size={14} className="mr-2" /> Modify

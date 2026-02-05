@@ -14,9 +14,9 @@ const AdminComms = () => {
     const fetchMessages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
             // Retrieve my messages. The backend filters for relevant messages.
-            const res = await axios.get(`${config.API_BASE_URL}/api/messages`, config);
+            const res = await axios.get(`${config.API_BASE_URL}/api/messages`, axiosConfig);
             setMessages(res.data);
             setLoading(false);
         } catch (error) {
@@ -34,7 +34,7 @@ const AdminComms = () => {
     const handleSendMessage = async (content, file) => {
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
             let attachmentPath = null;
 
@@ -59,7 +59,7 @@ const AdminComms = () => {
                     content: content || (file ? "Sent an attachment" : ""),
                     attachment: attachmentPath
                 },
-                config
+                axiosConfig
             );
 
             // Refresh messages immediately to show updated status
@@ -71,28 +71,36 @@ const AdminComms = () => {
     };
 
     return (
-        <div className="container mx-auto p-4 md:p-6 space-y-6">
-            <div className="flex justify-between items-center mb-2">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tighter text-[var(--text-primary)]">HEADQUARTERS LINK</h1>
-                    <p className="text-[var(--text-secondary)] font-medium tracking-wide">Direct secure line to Admin Command.</p>
-                </div>
-                <div className="hidden md:block p-3 bg-emerald-500/10 rounded-full border border-emerald-500/20 animate-pulse">
-                    <Leaf className="text-emerald-500" size={24} />
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] pb-20 lg:pb-6">
+            {/* Header (Hidden on Mobile for immersive chat) */}
+            <div className="shrink-0 px-4 md:px-6 pt-4 space-y-4 hidden md:block">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tighter text-[var(--text-primary)]">HEADQUARTERS LINK</h1>
+                        <p className="text-[var(--text-secondary)] font-medium tracking-wide">Direct secure line to Admin Command.</p>
+                    </div>
+                    <div className="hidden md:block p-3 bg-emerald-500/10 rounded-full border border-emerald-500/20 animate-pulse">
+                        <Leaf className="text-emerald-500" size={24} />
+                    </div>
                 </div>
             </div>
 
-            <EcoChat
-                currentUser={user}
-                contacts={[]} // No contacts needed for Single Mode
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                onSelectContact={() => { }}
-                selectedContact={null} // Important: Leave null to test Single Mode visuals, or pass dummy if needed
-                loading={loading}
-                singleContactMode={true}
-                chatTitle="Admin Uplink"
-            />
+            {/* Chat Area - Full width/height on Mobile */}
+            <div className="flex-1 min-h-0 px-0 pt-0 md:px-6 md:pt-4 transition-all duration-300">
+                <div className="h-full w-full overflow-hidden border-0 md:border md:rounded-2xl shadow-none md:shadow-2xl md:shadow-black/50 bg-[var(--card-bg)] border-[var(--card-border)]">
+                    <EcoChat
+                        currentUser={user}
+                        contacts={[]}
+                        messages={messages}
+                        onSendMessage={handleSendMessage}
+                        onSelectContact={() => { }}
+                        selectedContact={null}
+                        loading={loading}
+                        singleContactMode={true}
+                        chatTitle="Admin Uplink"
+                    />
+                </div>
+            </div>
         </div>
     );
 };
