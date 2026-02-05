@@ -10,7 +10,8 @@ import {
     History,
     FileText,
     Database,
-    TrendingUp
+    TrendingUp,
+    Users
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +21,7 @@ const BottomNav = ({ role }) => {
         { to: "/products", label: "Assets", icon: <Boxes size={22} />, roles: ['admin', 'manager', 'sales', 'user'] },
         { to: "/transactions", label: "Logs", icon: <History size={22} />, roles: ['admin', 'manager', 'sales', 'user'] },
         { to: "/analytics", label: "Intel", icon: <FileText size={22} />, roles: ['admin', 'manager'] },
+        { to: "/users", label: "Ops", icon: <Users size={22} />, roles: ['admin'] },
         // For sales/manager, message hub is important
         ...(role === 'sales' ? [{ to: "/sales-comms", label: "Comms", icon: <MessageSquare size={22} />, roles: ['sales'] }] : []),
         ...(role === 'manager' ? [{ to: "/admin-comms", label: "Comms", icon: <MessageSquare size={22} />, roles: ['manager'] }] : []),

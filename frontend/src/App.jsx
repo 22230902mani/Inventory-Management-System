@@ -27,7 +27,6 @@ import AdminComms from './pages/AdminComms';
 import SalesComms from './pages/SalesComms';
 import Profile from './pages/Profile';
 import TransactionHistory from './pages/TransactionHistory';
-import TransactionHistoryTest from './pages/TransactionHistoryTest';
 import Platform from './pages/Platform';
 import Intelligence from './pages/Intelligence';
 import PrivacyProtocol from './pages/PrivacyProtocol';
